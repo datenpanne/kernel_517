@@ -178,13 +178,13 @@
 		};
 	};
 
-	reg_lcd_iovcc: iovcc {
+	reg_lcd_iovcc: vcc {
 		compatible = "regulator-fixed";
-		regulator-name = "iovcc";
+		regulator-name = "vcc";
 		vin-supply = <&reg_lcd_pos>;	
 		gpio = <&msmgpio 97 GPIO_ACTIVE_HIGH>;
 		enable-active-high;
-		//regulator-always-on;
+		regulator-always-on;
 		regulator-boot-on;
 		pinctrl-names = "default";
 		pinctrl-0 = <&lcd_iovcc_default>;
@@ -196,7 +196,7 @@
 		vin-supply = <&reg_lcd_neg>;		
 		gpio = <&msmgpio 32 GPIO_ACTIVE_HIGH>;
 		enable-active-high;
-		//regulator-always-on;
+		regulator-always-on;
 		regulator-boot-on;
 		pinctrl-names = "default";
 		pinctrl-0 = <&lcd_vled_default>;
@@ -207,7 +207,7 @@
 		regulator-name = "lcd_pos";
 		regulator-min-microvolt = <5400000>;
 		regulator-max-microvolt = <5400000>;
-		//regulator-always-on;
+		regulator-always-on;
 		regulator-boot-on;
 	};
 
@@ -216,7 +216,7 @@
 		regulator-name = "lcd_neg";
 		regulator-min-microvolt = <5400000>;
 		regulator-max-microvolt = <5400000>;
-		//regulator-always-on;
+		regulator-always-on;
 		regulator-boot-on;
 	};
 
@@ -457,7 +457,7 @@
 		reg = <0>;
 
 		vled-supply = <&reg_lcd_vled>;
-		iovcc-supply = <&reg_lcd_iovcc>;
+		vcc-supply = <&reg_lcd_iovcc>;
 
 		reset-gpios = <&msmgpio 25 GPIO_ACTIVE_LOW>;
 		backlight-gpios = <&msmgpio 109 GPIO_ACTIVE_HIGH>;
@@ -587,7 +587,7 @@
 	};
 };
 
-&otg {
+&usb {
 	status = "okay";
 	extcon = <&bq24296>, <&usb_id>;
 	vbus-supply = <&usb_otg_vbus>;

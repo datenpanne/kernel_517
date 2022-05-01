@@ -49,7 +49,7 @@ struct boe_panel {
 	enum drm_panel_orientation orientation;
 	//struct regulator *pp1800;
 	struct regulator *vled;
-	struct regulator *iovcc;
+	struct regulator *vcc;
 	struct gpio_desc *reset_gpio;
 	struct gpio_desc *backlight_gpio;
 	bool prepared;
@@ -452,7 +452,7 @@ static int boe_panel_unprepare(struct drm_panel *panel)
 
 	if (boe->desc->discharge_on_disable) {
 		regulator_disable(boe->vled);
-		regulator_disable(boe->iovcc);
+		regulator_disable(boe->vcc);
 		usleep_range(5000, 7000);
 		gpiod_set_value(boe->reset_gpio, 0);
 		gpiod_set_value(boe->backlight_gpio, 0);
@@ -461,7 +461,7 @@ static int boe_panel_unprepare(struct drm_panel *panel)
 		gpiod_set_value(boe->reset_gpio, 0);
 		usleep_range(500, 1000);
 		regulator_disable(boe->vled);
-		regulator_disable(boe->iovcc);
+		regulator_disable(boe->vcc);
 		usleep_range(5000, 7000);
 		gpiod_set_value(boe->backlight_gpio, 0);
 		usleep_range(500, 1000);
@@ -487,12 +487,12 @@ static int boe_panel_prepare(struct drm_panel *panel)
 	gpiod_set_value(boe->backlight_gpio, 1);
 	usleep_range(3000, 5000);
 
-	ret = regulator_enable(boe->iovcc);
+	ret = regulator_enable(boe->vcc);
 	if (ret < 0)
 		gpiod_set_value(boe->backlight_gpio, 0);
 	ret = regulator_enable(boe->vled);
 	if (ret < 0)
-		goto poweroffiovcc;
+		goto poweroffvcc;
 
 	usleep_range(5000, 10000);
 
@@ -522,8 +522,8 @@ static int boe_panel_prepare(struct drm_panel *panel)
 
 poweroff:
 	regulator_disable(boe->vled);
-poweroffiovcc:
-	regulator_disable(boe->iovcc);
+poweroffvcc:
+	regulator_disable(boe->vcc);
 	usleep_range(5000, 7000);
 	gpiod_set_value(boe->backlight_gpio, 0);
 	gpiod_set_value(boe->reset_gpio, 0);
@@ -665,9 +665,9 @@ static int boe_panel_add(struct boe_panel *boe)
 	struct mipi_dsi_device *dsi = boe->dsi;
 	int err;
 
-	boe->iovcc = devm_regulator_get(dev, "iovcc");
-	if (IS_ERR(boe->iovcc))
-		return PTR_ERR(boe->iovcc);
+	boe->vcc = devm_regulator_get(dev, "vcc");
+	if (IS_ERR(boe->vcc))
+		return PTR_ERR(boe->vcc);
 
 	boe->vled = devm_regulator_get(dev, "vled");
 	if (IS_ERR(boe->vled))
