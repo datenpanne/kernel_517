@@ -7,6 +7,7 @@
 #include <dt-bindings/gpio/gpio.h>
 #include <dt-bindings/input/input.h>
 #include <dt-bindings/interrupt-controller/irq.h>
+#include <dt-bindings/leds/common.h>
 #include <dt-bindings/sound/apq8016-lpass.h>
 
 / {
@@ -484,7 +485,7 @@
 	};
 };
 
-&dsi_phy0 {
+&dsi0_phy {
 	status = "okay";
 	qcom,dsi-phy-regulator-ldo-mode;
 };
