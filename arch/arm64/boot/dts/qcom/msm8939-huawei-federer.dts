@@ -377,7 +377,7 @@
 		};
 	};*/
 
-	bq24296: charger@6b {
+	/*bq24296: charger@6b {
 		compatible = "ti,bq24296";
 		reg = <0x6b>;
 
@@ -390,7 +390,7 @@
 		omit-battery-class;
 
 		usb_otg_vbus: usb-otg-vbus { };
-	};
+	};*/ disable charger bq24292
 
 	ncp6335d: ncp6335d-regulator@1c {
 		compatible = "onnn,ncp6335d";
@@ -587,14 +587,16 @@
 	};
 };
 
-&usb {
+&otg {
 	status = "okay";
-	extcon = <&bq24296>, <&usb_id>;
-	vbus-supply = <&usb_otg_vbus>;
+	extcon = <&usb_id>, <&usb_id>;
+	//extcon = <&bq24296>, <&usb_id>;
+	//vbus-supply = <&usb_otg_vbus>;
 };
 
 &usb_hs_phy {
-	extcon = <&bq24296>;
+	extcon = <&usb_id>;
+	//extcon = <&bq24296>;
 	v1p8-supply = <&pm8916_l7>;
 	v3p3-supply = <&pm8916_l13>;
 };
