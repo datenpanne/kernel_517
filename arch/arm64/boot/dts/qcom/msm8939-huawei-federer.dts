@@ -36,16 +36,16 @@
 		/delete-node/ rfsa@867e0000;
 		/delete-node/ mba@8ea00000;
 
-		/*cont_splash_mem: framebuffer@83000000 {
+		cont_splash_mem: framebuffer@83000000 {
 			compatible = "removed-dma-pool";
 			reg = <0x0 0x83000000 0x0 0x2000000>;
 			no-map;
-		};*/
+		};
 
-		reserved@85000000 {
+		/*reserved@85000000 {
 			reg = <0x0 0x85000000 0x0 0x1000000>;
 			no-map;
-		};
+		};*/
 
 		rmtfs@86690000 {
 			compatible = "qcom,rmtfs-mem";
