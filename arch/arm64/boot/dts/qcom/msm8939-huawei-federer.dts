@@ -36,11 +36,11 @@
 		/delete-node/ rfsa@867e0000;
 		/delete-node/ mba@8ea00000;
 
-		cont_splash_mem: framebuffer@83000000 {
+		/*cont_splash_mem: framebuffer@83000000 {
 			compatible = "removed-dma-pool";
 			reg = <0x0 0x83000000 0x0 0x2000000>;
 			no-map;
-		};
+		};*/
 
 		reserved@85000000 {
 			reg = <0x0 0x85000000 0x0 0x1000000>;
@@ -462,9 +462,16 @@
 		reset-gpios = <&msmgpio 25 GPIO_ACTIVE_LOW>;
 		backlight-gpios = <&msmgpio 109 GPIO_ACTIVE_HIGH>;
 
-		port@0 {
-			panel_in: endpoint {
-				remote-endpoint = <&dsi0_out>;
+		ports {
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			port@0 {
+				reg = <0>;
+
+				panel_in: endpoint {
+					remote-endpoint = <&dsi0_out>;
+				};
 			};
 		};
 	};
