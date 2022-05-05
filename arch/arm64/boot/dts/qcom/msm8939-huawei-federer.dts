@@ -31,7 +31,7 @@
 	};
 
 	reserved-memory {
-		/delete-node/ venus@90000000;
+		/*/delete-node/ venus@90000000;
 		/delete-node/ rmtfs@86681000;
 		/delete-node/ rfsa@867e0000;
 		/delete-node/ mba@8ea00000;
@@ -42,7 +42,7 @@
 			no-map;
 		};
 
-		/*reserved@85000000 {
+		reserved@85000000 {
 			reg = <0x0 0x85000000 0x0 0x1000000>;
 			no-map;
 		};*/
@@ -54,7 +54,7 @@
 			qcom,client-id = <1>;
 		};
 
-		gps_mem: gps@8c400000 {
+		/*gps_mem: gps@8c400000 {
 			status = "disabled";
 			reg = <0x0 0x8c400000 0x0 0x200000>;
 			no-map;
@@ -87,7 +87,7 @@
 		mba_mem: mba@ffc00000 {
 			reg = <0 0xffc00000 0 0x400000>;
 			no-map;
-		};
+		};*/
 	};
 
 	/*huawei_fac_info {
