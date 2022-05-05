@@ -15,8 +15,8 @@
 	compatible = "huawei,federer", "qcom,msm8939";
 	chassis-type = "tablet";
 	qcom,msm-id = <239 0>;
-	qcom,board-id =	<8000 0>, <8000 4>; //t2_a01
-	huawei,modem_id = <0xFFF40096 0x0>;
+	qcom,board-id =	<8000 0>, <8000 4>; // t2_a01
+	// huawei,modem_id = <0xFFF40096 0x0>;
                     //<8016 0>, <8016 4>,
                     //<8032 0>, <8032 4>,
                     //<8112 0>, <8112 4>,
@@ -31,7 +31,7 @@
 	};
 
 	reserved-memory {
-		/*/delete-node/ venus@90000000;
+		/delete-node/ venus@90000000;
 		/delete-node/ rmtfs@86681000;
 		/delete-node/ rfsa@867e0000;
 		/delete-node/ mba@8ea00000;
@@ -45,7 +45,7 @@
 		reserved@85000000 {
 			reg = <0x0 0x85000000 0x0 0x1000000>;
 			no-map;
-		};*/
+		};
 
 		rmtfs@86690000 {
 			compatible = "qcom,rmtfs-mem";
@@ -54,7 +54,7 @@
 			qcom,client-id = <1>;
 		};
 
-		/*gps_mem: gps@8c400000 {
+		gps_mem: gps@8c400000 {
 			status = "disabled";
 			reg = <0x0 0x8c400000 0x0 0x200000>;
 			no-map;
@@ -87,7 +87,7 @@
 		mba_mem: mba@ffc00000 {
 			reg = <0 0xffc00000 0 0x400000>;
 			no-map;
-		};*/
+		};
 	};
 
 	/*huawei_fac_info {
