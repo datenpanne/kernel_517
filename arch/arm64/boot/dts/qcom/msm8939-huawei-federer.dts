@@ -8,6 +8,7 @@
 #include <dt-bindings/input/input.h>
 #include <dt-bindings/interrupt-controller/irq.h>
 #include <dt-bindings/leds/common.h>
+#include <dt-bindings/pinctrl/qcom,pmic-gpio.h>
 #include <dt-bindings/sound/apq8016-lpass.h>
 
 / {
@@ -27,7 +28,7 @@
 	};
 
 	chosen {
-		stdout-path = "serial0";
+		stdout-path = "serial0:115200n8";
 	};
 
 	reserved-memory {
@@ -178,9 +179,9 @@
 		};
 	};
 
-	reg_lcd_iovcc: vcc {
+	reg_lcd_iovcc: iovcc {
 		compatible = "regulator-fixed";
-		regulator-name = "vcc";
+		regulator-name = "iovcc";
 		vin-supply = <&reg_lcd_pos>;	
 		gpio = <&msmgpio 97 GPIO_ACTIVE_HIGH>;
 		enable-active-high;
@@ -447,17 +448,28 @@
 };
 
 &dsi0 {
+	vdda-supply = <&pm8916_l2>;
+	vddio-supply = <&pm8916_l16>;
 	status = "okay";
 	pinctrl-names = "default", "sleep";
 	pinctrl-0 = <&mdss_default>;
 	pinctrl-1 = <&mdss_sleep>;
+
+	ports {
+		port@1 {
+			endpoint {
+				remote-endpoint = <&panel_in>;
+				data-lanes = <0 1 2 3>;
+			};
+		};
+	};
 
 	panel@0 {
 		compatible = "boe,nt51021-10-1200p";
 		reg = <0>;
 
 		vled-supply = <&reg_lcd_vled>;
-		vcc-supply = <&reg_lcd_iovcc>;
+		iovcc-supply = <&reg_lcd_iovcc>;
 
 		reset-gpios = <&msmgpio 25 GPIO_ACTIVE_LOW>;
 		backlight-gpios = <&msmgpio 109 GPIO_ACTIVE_HIGH>;
@@ -517,6 +529,14 @@
 
 	iris {
 		compatible = "qcom,wcn3660";
+	};
+
+	smd-edge {
+		wcnss {
+			bt {
+				local-bd-address = [ 55 44 33 22 11 00 ];
+			};
+		};
 	};
 };
 
@@ -854,10 +874,10 @@
 		bias-pull-up;
 	};
 
-    otg {
+    /*otg {
         gpio-hog;
         gpios = <108 GPIO_ACTIVE_HIGH>;
         output-high;
         line-name = "otg-gpio";
-    };
+    };*/
 };
