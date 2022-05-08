@@ -489,10 +489,10 @@
 	};
 };
 
-&dsi0_out {
+/*&dsi0_out {
 	data-lanes = <0 1 2 3>;
 	remote-endpoint = <&panel_in>;
-};
+};*/
 
 &dsi0_phy {
 	status = "okay";
