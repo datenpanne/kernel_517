@@ -1669,7 +1669,7 @@
 					      "core";
 				phys = <&dsi0_phy>;
 				phy-names = "dsi-phy";
-				//status = "disabled";
+				status = "disabled";
 
 				#address-cells = <1>;
 				#size-cells = <0>;
