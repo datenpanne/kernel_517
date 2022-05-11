@@ -120,13 +120,6 @@
 					<3469000 3>, <3381000 2>, <3252000 1>, <3000000 0>;
 	};
 
-	backlight: backlight {
-		compatible = "gpio-backlight";
-		pinctrl-names = "default";
-		pinctrl-0 = <&pinctrl_backlight>;
-		gpios = <&msmgpio 109 GPIO_ACTIVE_HIGH>;
-	};
-
 	gpio-hall-sensor {
 		compatible = "gpio-keys";
 
@@ -475,13 +468,11 @@
 		compatible = "boe,nt51021-10-1200p";
 		reg = <0>;
 
-		backlight = <&backlight>;
-
 		vled-supply = <&reg_lcd_vled>;
 		iovcc-supply = <&reg_lcd_iovcc>;
 
 		reset-gpios = <&msmgpio 25 GPIO_ACTIVE_LOW>;
-		//backlight-gpios = <&msmgpio 109 GPIO_ACTIVE_HIGH>;
+		backlight-gpios = <&msmgpio 109 GPIO_ACTIVE_HIGH>;
 
 		ports {
 			#address-cells = <1>;
