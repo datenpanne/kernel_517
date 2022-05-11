@@ -4,6 +4,7 @@
  * Author: Jitao Shi <jitao.shi@mediatek.com>
  */
 
+#include <linux/backlight.h>
 #include <linux/delay.h>
 #include <linux/gpio/consumer.h>
 #include <linux/module.h>
@@ -50,6 +51,7 @@ struct boe_panel {
 	struct regulator *vled;
 	struct regulator *iovcc;
 	struct gpio_desc *reset_gpio;
+	struct gpio_desc *backlight_gpio;
 	bool prepared;
 };
 
@@ -453,12 +455,16 @@ static int boe_panel_unprepare(struct drm_panel *panel)
 		regulator_disable(boe->iovcc);
 		usleep_range(5000, 7000);
 		gpiod_set_value(boe->reset_gpio, 0);
+		gpiod_set_value(boe->backlight_gpio, 0);
+		usleep_range(5000, 7000);
 	} else {
 		gpiod_set_value(boe->reset_gpio, 0);
 		usleep_range(500, 1000);
 		regulator_disable(boe->vled);
 		regulator_disable(boe->iovcc);
 		usleep_range(5000, 7000);
+		gpiod_set_value(boe->backlight_gpio, 0);
+		usleep_range(500, 1000);
 	}
 
 	boe->prepared = false;
@@ -477,11 +483,12 @@ static int boe_panel_prepare(struct drm_panel *panel)
 	gpiod_set_value(boe->reset_gpio, 0);
 	usleep_range(1000, 1500);
 
-	ret = regulator_enable(boe->iovcc);
-	if (ret < 0)
-		return ret;
+	gpiod_set_value(boe->backlight_gpio, 1);
 	usleep_range(3000, 5000);
 
+	ret = regulator_enable(boe->iovcc);
+	if (ret < 0)
+		gpiod_set_value(boe->backlight_gpio, 0);
 	ret = regulator_enable(boe->vled);
 	if (ret < 0)
 		goto poweroffiovcc;
@@ -501,6 +508,13 @@ static int boe_panel_prepare(struct drm_panel *panel)
 		goto poweroff;
 	}
 
+	/*ret = mipi_dsi_dcs_set_display_brightness(dsi, 0x00ff);
+	if (ret < 0) {
+		dev_err(panel->dev "Failed to set display brightness: %d\n", ret);
+		return ret;
+	}
+	usleep_range(5000, 6000);*/
+
 	boe->prepared = true;
 
 	return 0;
@@ -510,6 +524,7 @@ poweroff:
 poweroffiovcc:
 	regulator_disable(boe->iovcc);
 	usleep_range(5000, 7000);
+	gpiod_set_value(boe->backlight_gpio, 0);
 	gpiod_set_value(boe->reset_gpio, 0);
 
 	return ret;
@@ -548,10 +563,10 @@ static const struct panel_desc boe_nt51021_10_desc = {
 			//MIPI_DSI_MODE_VIDEO_SYNC_PULSE |
 			MIPI_DSI_MODE_VIDEO_HSE |
 			MIPI_DSI_MODE_NO_EOT_PACKET |
-            MIPI_DSI_MODE_LPM,
+			MIPI_DSI_MODE_LPM,
 			//MIPI_DSI_CLOCK_NON_CONTINUOUS | #pixels & stripes
 	.init_cmds = boe_init_cmd,
-	.discharge_on_disable = true,
+	//.discharge_on_disable = true,
 };
 
 static int boe_panel_get_modes(struct drm_panel *panel,
@@ -587,9 +602,67 @@ static const struct drm_panel_funcs boe_panel_funcs = {
 	.get_modes = boe_panel_get_modes,
 };
 
+static int boe_panel_bl_update_status(struct backlight_device *bl)
+{
+	struct mipi_dsi_device *dsi = bl_get_data(bl);
+	struct boe_panel *boe = mipi_dsi_get_drvdata(dsi);
+	u16 brightness = backlight_get_brightness(bl);
+	int ret;
+
+	gpiod_set_value_cansleep(boe->backlight_gpio, !!brightness);
+
+	dsi->mode_flags &= ~MIPI_DSI_MODE_LPM;
+
+	ret = mipi_dsi_dcs_set_display_brightness(dsi, brightness);
+	if (ret < 0)
+		return ret;
+
+	dsi->mode_flags |= MIPI_DSI_MODE_LPM;
+
+	return 0;
+}
+
+static int boe_panel_bl_get_brightness(struct backlight_device *bl)
+{
+	struct mipi_dsi_device *dsi = bl_get_data(bl);
+	u16 brightness;
+	int ret;
+
+	dsi->mode_flags &= ~MIPI_DSI_MODE_LPM;
+
+	ret = mipi_dsi_dcs_get_display_brightness(dsi, &brightness);
+	if (ret < 0)
+		return ret;
+
+	dsi->mode_flags |= MIPI_DSI_MODE_LPM;
+
+	return brightness & 0xff;
+}
+
+static const struct backlight_ops boe_bl_ops = {
+	.update_status = boe_panel_bl_update_status,
+	.get_brightness = boe_panel_bl_get_brightness,
+};
+
+static struct backlight_device *
+boe_create_backlight(struct mipi_dsi_device *dsi)
+{
+	struct device *dev = &dsi->dev;
+	const struct backlight_properties props = {
+		.type = BACKLIGHT_RAW,
+		.brightness = 127,
+		.max_brightness = 255,
+		.scale = BACKLIGHT_SCALE_NON_LINEAR,
+	};
+
+	return devm_backlight_device_register(dev, dev_name(dev), dev, dsi,
+					      &boe_bl_ops, &props);
+}
+
 static int boe_panel_add(struct boe_panel *boe)
 {
 	struct device *dev = &boe->dsi->dev;
+	struct mipi_dsi_device *dsi = boe->dsi;
 	int err;
 
 	boe->iovcc = devm_regulator_get(dev, "iovcc");
@@ -607,7 +680,15 @@ static int boe_panel_add(struct boe_panel *boe)
 		return PTR_ERR(boe->reset_gpio);
 	}
 
+	boe->backlight_gpio = devm_gpiod_get(dev, "backlight", GPIOD_OUT_LOW);
+	if (IS_ERR(boe->backlight_gpio)) {
+		dev_err(dev, "cannot get backlight-gpios %ld\n",
+			PTR_ERR(boe->backlight_gpio));
+		return PTR_ERR(boe->backlight_gpio);
+	}
+
 	gpiod_set_value(boe->reset_gpio, 0);
+	gpiod_set_value(boe->backlight_gpio, 0);
 
 	drm_panel_init(&boe->base, dev, &boe_panel_funcs,
 		       DRM_MODE_CONNECTOR_DSI);
@@ -616,6 +697,11 @@ static int boe_panel_add(struct boe_panel *boe)
 		dev_err(dev, "%pOF: failed to get orientation %d\n", dev->of_node, err);
 		return err;
 	}
+
+	boe->base.backlight = boe_create_backlight(dsi);
+	if (IS_ERR(boe->base.backlight))
+		return dev_err_probe(dev, PTR_ERR(boe->base.backlight),
+				     "Failed to create backlight\n");
 
 	err = drm_panel_of_backlight(&boe->base);
 	if (err)
