@@ -48,9 +48,10 @@
 			no-map;
 		};
 
-		rmtfs@86690000 {
+		rmtfs@86700000 {
 			compatible = "qcom,rmtfs-mem";
-			reg = <0x0 0x86690000 0x0 0x100000>;
+			//reg = <0x0 0x86690000 0x0 0x100000>;
+			reg = <0x0 0x86700000 0x0 0x200000>;
 			no-map;
 			qcom,client-id = <1>;
 		};
@@ -181,8 +182,8 @@
 
 	reg_lcd_iovcc: iovcc {
 		compatible = "regulator-fixed";
-		regulator-name = "iovcc";
-		vin-supply = <&reg_lcd_pos>;	
+		regulator-name = "vcc";
+		//vin-supply = <&reg_lcd_pos>;	
 		gpio = <&msmgpio 97 GPIO_ACTIVE_HIGH>;
 		enable-active-high;
 		regulator-always-on;
@@ -194,7 +195,7 @@
 	reg_lcd_vled: vled {
 		compatible = "regulator-fixed";
 		regulator-name = "vled";
-		vin-supply = <&reg_lcd_neg>;		
+		//vin-supply = <&reg_lcd_neg>;		
 		gpio = <&msmgpio 32 GPIO_ACTIVE_HIGH>;
 		enable-active-high;
 		regulator-always-on;
@@ -205,7 +206,7 @@
 
 	reg_lcd_pos: regulator-lcd-pos {
 		compatible = "regulator-fixed";
-		regulator-name = "lcd_pos";
+		regulator-name = "lcd-pos";
 		regulator-min-microvolt = <5400000>;
 		regulator-max-microvolt = <5400000>;
 		regulator-always-on;
@@ -214,7 +215,7 @@
 
 	reg_lcd_neg: regulator-lcd-neg {
 		compatible = "regulator-fixed";
-		regulator-name = "lcd_neg";
+		regulator-name = "lcd-neg";
 		regulator-min-microvolt = <5400000>;
 		regulator-max-microvolt = <5400000>;
 		regulator-always-on;
@@ -234,46 +235,35 @@
 		pinctrl-0 = <&vcc5v0_en_default>;
 	};*/
 
-	reg_spk_ext_pa_boost: spk-ext-pa-boost {
+	spk_pa_boost: spk-ext-pa-boost {
 		compatible = "regulator-fixed";
-		regulator-name = "spk_ext_pa_boost";
-		regulator-min-microvolt = <5000000>;
-		regulator-max-microvolt = <5000000>;
-		regulator-boot-on;
+		regulator-name = "spk-pa-boost";
+		regulator-min-microvolt = <3300000>;
+		regulator-max-microvolt = <3300000>;
 
-		gpio = <&msmgpio 1 GPIO_ACTIVE_HIGH>;
+		gpios = <&msmgpio 2 GPIO_ACTIVE_HIGH>;
 		enable-active-high;
 		pinctrl-names = "default";
-		pinctrl-0 = <&spk_ext_pa_boost_default>;
+		pinctrl-0 = <&spk_pa_boost_default>;
 	};
 
-	speaker_amp_left: audio-amplifier-left {
+	speaker_amp: audio-amplifier {
 		compatible = "simple-audio-amplifier";
-		VCC-supply = <&reg_spk_ext_pa_boost>;
-		enable-gpios = <&msmgpio 2 GPIO_ACTIVE_HIGH>;
-		sound-name-prefix = "Speaker Amp L";
+		VCC-supply = <&spk_pa_boost>;
+		enable-gpios = <&msmgpio 1 GPIO_ACTIVE_HIGH>;
+		sound-name-prefix = "Speaker Amp";
 
-        startup-delay-us = <100>;
-
+		gpios = <&msmgpio 2 GPIO_ACTIVE_HIGH>;
+		enable-active-high;
 		pinctrl-names = "default";
-		pinctrl-0 = <&speaker_amp_left_default>;
-	};
+		pinctrl-0 = <&speaker_amp_default>;
 
-	speaker_amp_right: audio-amplifier-right {
-		compatible = "simple-audio-amplifier";
-		VCC-supply = <&reg_spk_ext_pa_boost>;
-		enable-gpios = <&msmgpio 3 GPIO_ACTIVE_HIGH>;
-		sound-name-prefix = "Speaker Amp R";
-
-        startup-delay-us = <100>;
-
-		pinctrl-names = "default";
-		pinctrl-0 = <&speaker_amp_right_default>;
 	};
 
 	headphones_switch: audio-switch {
 		compatible = "simple-audio-amplifier";
 		enable-gpios = <&msmgpio 0 GPIO_ACTIVE_HIGH>;
+		//VCC-supply = <&reg_spk_ext_pa_boost>;
 
 		pinctrl-names = "default";
 		pinctrl-0 = <&headphones_switch_default>;
@@ -448,12 +438,14 @@
 };
 
 &dsi0 {
-	vdda-supply = <&pm8916_l2>;
-	vddio-supply = <&pm8916_l16>;
+	/*vdda-supply = <&pm8916_l2>;
+	vddio-supply = <&pm8916_l16>;*/
+	vsp-supply = <&reg_lcd_pos>;
+	vsn-supply = <&reg_lcd_neg>;
 	status = "okay";
-	pinctrl-names = "default", "sleep";
+	/*pinctrl-names = "default", "sleep";
 	pinctrl-0 = <&mdss_default>;
-	pinctrl-1 = <&mdss_sleep>;
+	pinctrl-1 = <&mdss_sleep>;*/
 
 	ports {
 		port@1 {
@@ -561,8 +553,8 @@
 	pinctrl-0 = <&sdc2_clk_on &sdc2_cmd_on &sdc2_data_on &sdc2_cd_on>;
 	pinctrl-1 = <&sdc2_clk_off &sdc2_cmd_off &sdc2_data_off &sdc2_cd_off>;
 
-	cd-gpios = <&msmgpio 56 GPIO_ACTIVE_LOW>;
-	//cd-gpios = <&msmgpio 38 GPIO_ACTIVE_HIGH>;
+	//cd-gpios = <&msmgpio 56 GPIO_ACTIVE_LOW>;
+	cd-gpios = <&msmgpio 38 GPIO_ACTIVE_LOW>;
 };
 
 &sound {
@@ -572,17 +564,18 @@
 
 	pinctrl-0 = <&cdc_pdm_lines_act>;
 	pinctrl-1 = <&cdc_pdm_lines_sus>;
-
-	model = "oppo-a51f";
+	
+	model = "wt88047";
+	//model = "oppo-a51f";
 	audio-routing =
-		"Speaker Amp L IN", "HPH_L_EXT",
-		"Speaker Amp R IN", "HPH_R_EXT",
+		"Speaker Amp INL", "HPH_L_EXT",
+		"Speaker Amp INR", "HPH_R_EXT",
 		"Headphones Switch INL", "HPH_L",
 		"Headphones Switch INR", "HPH_R",
 		"AMIC1", "MIC BIAS External1",
 		"AMIC2", "MIC BIAS External2",
 		"AMIC3", "MIC BIAS External1";
-	aux-devs = <&speaker_amp_left>, <&speaker_amp_right>, <&headphones_switch>;
+	aux-devs = <&speaker_amp>, <&headphones_switch>;
 
 	dai-link-primary {
 		link-name = "Primary MI2S";
@@ -849,7 +842,7 @@
 		};
 	};*/
 
-	speaker_amp_left_default: speaker-amp-left-default {
+	speaker_amp_default: speaker-amp-default {
 		pins = "gpio2";
 		function = "gpio";
 
@@ -857,16 +850,8 @@
 		bias-disable;
 	};
 
-	speaker_amp_right_default: speaker-amp-right-default {
-		pins = "gpio3";
-		function = "gpio";
-
-		drive-strength = <2>;
-		bias-disable;
-	};
-
-	spk_ext_pa_boost_default: spk-ext-pa-boost-default {
-		pins = "gpio1";
+	spk_pa_boost_default: spk-pa-boost-default {
+		pins = "gpio2";
 		function = "gpio";
 
 		drive-strength = <2>;
