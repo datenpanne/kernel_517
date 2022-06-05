@@ -1517,7 +1517,7 @@
 			};
 		};
 
-		/*gpu_iommu: iommu@1f08000 {
+		gpu_iommu: iommu@1f08000 {
 			#address-cells = <1>;
 			#size-cells = <1>;
 			#iommu-cells = <1>;
@@ -1527,22 +1527,22 @@
 				 <&gcc GCC_GFX_TCU_CLK>,
 				 <&gcc GCC_GFX_TBU_CLK>;
 			clock-names = "iface", "bus", "tlb";
-			qcom,iommu-secure-id = <18>; */
+			qcom,iommu-secure-id = <18>; 
 
 			/* gfx3d_user: */
-			/*iommu-ctx@1000 {
+			iommu-ctx@1000 {
 				compatible = "qcom,msm-iommu-v1-ns";
 				reg = <0x1000 0x1000>;
 				interrupts = <GIC_SPI 241 IRQ_TYPE_LEVEL_HIGH>;
-			};*/
+			};
 
 			/* gfx3d_priv: */
-			/*iommu-ctx@2000 {
+			iommu-ctx@2000 {
 				compatible = "qcom,msm-iommu-v1-ns";
 				reg = <0x2000 0x1000>;
 				interrupts = <GIC_SPI 242 IRQ_TYPE_LEVEL_HIGH>;
 			};
-		};*/
+		};
 
 		gpu@1c00000 {
 			compatible = "qcom,adreno-405.0", "qcom,adreno";
@@ -1568,7 +1568,10 @@
 			    <&gcc GCC_OXILI_TIMER_CLK>;
 			power-domains = <&gcc OXILI_GDSC>;
 			operating-points-v2 = <&gpu_opp_table>;
-			//iommus = <&gpu_iommu 1>, <&gpu_iommu 2>;
+			iommus = <&gpu_iommu 1>, <&gpu_iommu 2>;
+
+			interconnects = <&bimc MASTER_GRAPHICS_3D &bimc SLAVE_EBI_CH0>;
+			interconnect-names = "gfx-mem";
 		};
 
 		mdss: mdss@1a00000 {
