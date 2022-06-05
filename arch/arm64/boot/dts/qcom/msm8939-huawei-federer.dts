@@ -241,7 +241,7 @@
 		regulator-min-microvolt = <3300000>;
 		regulator-max-microvolt = <3300000>;
 
-		gpios = <&msmgpio 2 GPIO_ACTIVE_HIGH>;
+		gpios = <&msmgpio 3 GPIO_ACTIVE_HIGH>;
 		enable-active-high;
 		pinctrl-names = "default";
 		pinctrl-0 = <&spk_pa_boost_default>;
@@ -519,7 +519,7 @@
 &pronto {
 	status = "okay";
 
-	iris {
+	/*iris {
 		compatible = "qcom,wcn3660";
 	};
 
@@ -529,7 +529,7 @@
 				local-bd-address = [ 55 44 33 22 11 00 ];
 			};
 		};
-	};
+	};*/
 };
 
 &sdhc_1 {
@@ -843,7 +843,7 @@
 	};*/
 
 	speaker_amp_default: speaker-amp-default {
-		pins = "gpio2";
+		pins = "gpio3";
 		function = "gpio";
 
 		drive-strength = <2>;
