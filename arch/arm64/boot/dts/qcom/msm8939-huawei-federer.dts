@@ -86,10 +86,10 @@
 			no-map;
 		};
 
-		/*mba_mem: mba@ffc00000 {
+		mba_mem: mba@ffc00000 {
 			reg = <0 0xffc00000 0 0x400000>;
 			no-map;
-		};*/
+		};
 	};
 
 	/*huawei_fac_info {
