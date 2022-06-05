@@ -241,7 +241,7 @@
 		regulator-min-microvolt = <3300000>;
 		regulator-max-microvolt = <3300000>;
 
-		gpios = <&msmgpio 3 GPIO_ACTIVE_HIGH>;
+		gpios = <&msmgpio 2 GPIO_ACTIVE_HIGH>;
 		enable-active-high;
 		pinctrl-names = "default";
 		pinctrl-0 = <&spk_pa_boost_default>;
@@ -253,7 +253,7 @@
 		enable-gpios = <&msmgpio 1 GPIO_ACTIVE_HIGH>;
 		sound-name-prefix = "Speaker Amp";
 
-		gpios = <&msmgpio 2 GPIO_ACTIVE_HIGH>;
+		gpios = <&msmgpio 3 GPIO_ACTIVE_HIGH>;
 		enable-active-high;
 		pinctrl-names = "default";
 		pinctrl-0 = <&speaker_amp_default>;
@@ -568,10 +568,10 @@
 	model = "wt88047";
 	//model = "oppo-a51f";
 	audio-routing =
-		"Speaker Amp INL", "HPH_L_EXT",
-		"Speaker Amp INR", "HPH_R_EXT",
-		"Headphones Switch INL", "HPH_L",
-		"Headphones Switch INR", "HPH_R",
+		"Speaker Amp INL", "HPHL",
+		"Speaker Amp INR", "HPHR",
+		"Headphones Switch INL", "HPHL",
+		"Headphones Switch INR", "HPHR",
 		"AMIC1", "MIC BIAS External1",
 		"AMIC2", "MIC BIAS External2",
 		"AMIC3", "MIC BIAS External1";
