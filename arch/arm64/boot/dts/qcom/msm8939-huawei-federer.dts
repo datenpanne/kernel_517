@@ -204,18 +204,18 @@
 		pinctrl-0 = <&lcd_vled_default>;
 	};
 
-	reg_lcd_pos: regulator-lcd-pos {
+	reg_lcd_vsp: regulator-lcd-vsp {
 		compatible = "regulator-fixed";
-		regulator-name = "lcd-pos";
+		regulator-name = "vsp";
 		regulator-min-microvolt = <5400000>;
 		regulator-max-microvolt = <5400000>;
 		regulator-always-on;
 		regulator-boot-on;
 	};
 
-	reg_lcd_neg: regulator-lcd-neg {
+	reg_lcd_vsn: regulator-lcd-vsn {
 		compatible = "regulator-fixed";
-		regulator-name = "lcd-neg";
+		regulator-name = "vsn";
 		regulator-min-microvolt = <5400000>;
 		regulator-max-microvolt = <5400000>;
 		regulator-always-on;
@@ -458,8 +458,8 @@
 		compatible = "boe,nt51021-10-1200p";
 		reg = <0>;
 
-        vsp-supply = <&reg_lcd_pos>;
-        vsn-supply = <&reg_lcd_neg>;
+        vsp-supply = <&reg_lcd_vsp>;
+        vsn-supply = <&reg_lcd_vsn>;
 		vled-supply = <&reg_lcd_vled>;
 		iovcc-supply = <&reg_lcd_iovcc>;
 
