@@ -234,6 +234,8 @@ static int boe_panel_prepare(struct drm_panel *panel)
 	gpiod_set_value(boe->reset_gpio, 0);
 	usleep_range(1000, 1500);
 
+	gpiod_set_value(boe->backlight_gpio, 1);
+
 	ret = regulator_enable(boe->vsn);
 	if (ret < 0)
 		return ret;
@@ -241,8 +243,6 @@ static int boe_panel_prepare(struct drm_panel *panel)
 	ret = regulator_enable(boe->vsp);
 	if (ret < 0)
 		return ret;
-
-	gpiod_set_value(boe->backlight_gpio, 1);
 
 	usleep_range(3000, 5000);
 
@@ -327,8 +327,8 @@ static const struct panel_desc boe_nt51021_10_desc = {
 			//MIPI_DSI_MODE_VIDEO_SYNC_PULSE |
 			MIPI_DSI_MODE_VIDEO_HSE |
 			MIPI_DSI_MODE_NO_EOT_PACKET |
-			MIPI_DSI_MODE_LPM,
-			//MIPI_DSI_CLOCK_NON_CONTINUOUS | #pixels & stripes
+			MIPI_DSI_MODE_LPM |
+			MIPI_DSI_CLOCK_NON_CONTINUOUS, //pixels & stripes
 	.init_cmds = boe_init_cmd,
 	//.discharge_on_disable = true,
 };
@@ -414,9 +414,9 @@ boe_create_backlight(struct mipi_dsi_device *dsi)
 	struct device *dev = &dsi->dev;
 	const struct backlight_properties props = {
 		.type = BACKLIGHT_RAW,
-		.brightness = 127,
+		.brightness = 255,
 		.max_brightness = 255,
-		.scale = BACKLIGHT_SCALE_NON_LINEAR,
+		//.scale = BACKLIGHT_SCALE_NON_LINEAR,
 	};
 
 	return devm_backlight_device_register(dev, dev_name(dev), dev, dsi,
