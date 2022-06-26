@@ -47,8 +47,6 @@ struct boe_panel {
 	const struct panel_desc *desc;
 
 	enum drm_panel_orientation orientation;
-	struct regulator *vsn;
-	struct regulator *vsp;
 	struct regulator *iovcc;
 	struct regulator *vled;
 	struct gpio_desc *reset_gpio;
@@ -204,16 +202,12 @@ static int boe_panel_unprepare(struct drm_panel *panel)
 		gpiod_set_value(boe->reset_gpio, 0);
 		gpiod_set_value(boe->backlight_gpio, 0);
 		usleep_range(5000, 7000);
-		regulator_disable(boe->vsp);
-		regulator_disable(boe->vsn);
 	} else {
 		gpiod_set_value(boe->reset_gpio, 0);
 		usleep_range(500, 1000);
 		regulator_disable(boe->vled);
 		regulator_disable(boe->iovcc);
 		usleep_range(5000, 7000);
-		regulator_disable(boe->vsp);
-		regulator_disable(boe->vsn);
 		gpiod_set_value(boe->backlight_gpio, 0);
 		usleep_range(500, 1000);
 	}
@@ -236,24 +230,14 @@ static int boe_panel_prepare(struct drm_panel *panel)
 
 	gpiod_set_value(boe->backlight_gpio, 1);
 
-	ret = regulator_enable(boe->vsn);
-	if (ret < 0)
-		return ret;
-
-	ret = regulator_enable(boe->vsp);
-	if (ret < 0)
-		return ret;
-
 	usleep_range(3000, 5000);
 
 	ret = regulator_enable(boe->iovcc);
 	if (ret < 0)
-		goto poweroffvsp;
+		gpiod_set_value(boe->backlight_gpio, 0);
 	ret = regulator_enable(boe->vled);
 	if (ret < 0)
 		goto poweroffiovcc;
-
-	gpiod_set_value(boe->backlight_gpio, 0);
 
 	usleep_range(5000, 10000);
 
@@ -285,9 +269,7 @@ poweroff:
 	regulator_disable(boe->vled);
 poweroffiovcc:
 	regulator_disable(boe->iovcc);
-poweroffvsp:
 	usleep_range(5000, 7000);
-	regulator_disable(boe->vsp);
 	gpiod_set_value(boe->backlight_gpio, 0);
 	gpiod_set_value(boe->reset_gpio, 0);
 
@@ -327,8 +309,8 @@ static const struct panel_desc boe_nt51021_10_desc = {
 			//MIPI_DSI_MODE_VIDEO_SYNC_PULSE |
 			MIPI_DSI_MODE_VIDEO_HSE |
 			MIPI_DSI_MODE_NO_EOT_PACKET |
-			MIPI_DSI_MODE_LPM |
-			MIPI_DSI_CLOCK_NON_CONTINUOUS, //pixels & stripes
+			MIPI_DSI_MODE_LPM,
+			//MIPI_DSI_CLOCK_NON_CONTINUOUS, //pixels & stripes
 	.init_cmds = boe_init_cmd,
 	//.discharge_on_disable = true,
 };
@@ -436,14 +418,6 @@ static int boe_panel_add(struct boe_panel *boe)
 	boe->vled = devm_regulator_get(dev, "vled");
 	if (IS_ERR(boe->vled))
 		return PTR_ERR(boe->vled);
-
-	boe->vsn = devm_regulator_get(dev, "vsn");
-	if (IS_ERR(boe->vsn))
-		return PTR_ERR(boe->vsn);
-
-	boe->vsp = devm_regulator_get(dev, "vsp");
-	if (IS_ERR(boe->vsp))
-		return PTR_ERR(boe->vsp);
 
 	boe->reset_gpio = devm_gpiod_get(dev, "reset", GPIOD_OUT_HIGH);
 	if (IS_ERR(boe->reset_gpio)) {

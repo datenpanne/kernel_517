@@ -438,6 +438,8 @@
 };
 
 &dsi0 {
+    vsp-supply = <&reg_lcd_vsp>;
+    vsn-supply = <&reg_lcd_vsn>;
 	/*vdda-supply = <&pm8916_l2>;
 	vddio-supply = <&pm8916_l16>;*/
 	status = "okay";
@@ -458,8 +460,6 @@
 		compatible = "boe,nt51021-10-1200p";
 		reg = <0>;
 
-        vsp-supply = <&reg_lcd_vsp>;
-        vsn-supply = <&reg_lcd_vsn>;
 		vled-supply = <&reg_lcd_vled>;
 		iovcc-supply = <&reg_lcd_iovcc>;
 
