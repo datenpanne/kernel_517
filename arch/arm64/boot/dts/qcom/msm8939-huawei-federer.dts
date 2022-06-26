@@ -16,12 +16,12 @@
 	compatible = "huawei,federer", "qcom,msm8939";
 	chassis-type = "tablet";
 	qcom,msm-id = <239 0>;
-	qcom,board-id =	<8000 0>, <8000 4>; // t2_a01
-	// huawei,modem_id = <0xFFF40096 0x0>;
-                    //<8016 0>, <8016 4>,
-                    //<8032 0>, <8032 4>,
-                    //<8112 0>, <8112 4>,
-                    //<8128 0>, <8128 4>;
+	qcom,board-id =	<8000 0>, <8000 4>, //t2_a01
+                    <8016 0>, <8016 4>,
+                    <8032 0>, <8032 4>,
+                    <8112 0>, <8112 4>,
+                    <8128 0>, <8128 4>;
+	//huawei,modem_id = <0xFFF40096 0x0>; //t2_a01
 
 	aliases {
 		serial0 = &blsp1_uart2;
@@ -33,7 +33,7 @@
 
 	reserved-memory {
 		/delete-node/ venus@90000000;
-		// /delete-node/ rmtfs@86681000;
+		/delete-node/ rmtfs@86681000;
 		/delete-node/ rfsa@867e0000;
 		/delete-node/ mba@8ea00000;
 
@@ -48,13 +48,12 @@
 			no-map;
 		};
 
-		/*rmtfs@86700000 {
+		rmtfs@86690000 {
 			compatible = "qcom,rmtfs-mem";
-			//reg = <0x0 0x86690000 0x0 0x100000>;
-			reg = <0x0 0x86700000 0x0 0x200000>;
+			reg = <0x0 0x86690000 0x0 0x100000>;
 			no-map;
 			qcom,client-id = <1>;
-		};*/
+		};
 
 		gps_mem: gps@8c400000 {
 			status = "disabled";
@@ -440,8 +439,6 @@
 &dsi0 {
 	/*vdda-supply = <&pm8916_l2>;
 	vddio-supply = <&pm8916_l16>;*/
-	vsp-supply = <&reg_lcd_pos>;
-	vsn-supply = <&reg_lcd_neg>;
 	status = "okay";
 	/*pinctrl-names = "default", "sleep";
 	pinctrl-0 = <&mdss_default>;
@@ -462,7 +459,8 @@
 
 		vled-supply = <&reg_lcd_vled>;
 		iovcc-supply = <&reg_lcd_iovcc>;
-
+		vsp-supply = <&reg_lcd_pos>;
+		vsn-supply = <&reg_lcd_neg>;
 		reset-gpios = <&msmgpio 25 GPIO_ACTIVE_LOW>;
 		backlight-gpios = <&msmgpio 109 GPIO_ACTIVE_HIGH>;
 
@@ -811,13 +809,6 @@
 		output-low;
 	};
 
-	pinctrl_backlight: backlight {
-		pinmux {
-			pins = "gpio108";
-			function = "gpio";
-		};
-	};
-
 	mdss {
 		mdss_default: mdss-default {
 			pins = "gpio25";
@@ -852,7 +843,15 @@
 		};
 	};*/
 
-	speaker_amp_default: speaker-amp-default {
+	/*speaker_amp_left_default: speaker-amp-left-default {
+		pins = "gpio2";
+		function = "gpio";
+
+		drive-strength = <2>;
+		bias-disable;
+	};
+
+	speaker_amp_right_default: speaker-amp-right-default {
 		pins = "gpio3";
 		function = "gpio";
 
@@ -860,13 +859,13 @@
 		bias-disable;
 	};
 
-	spk_pa_boost_default: spk-pa-boost-default {
-		pins = "gpio2";
+	spk_ext_pa_boost_default: spk-ext-pa-boost-default {
+		pins = "gpio1";
 		function = "gpio";
 
 		drive-strength = <2>;
 		bias-disable;
-	};
+	};*/
 
 	usb_id_default: usb-id-default {
 		pins = "gpio117";
