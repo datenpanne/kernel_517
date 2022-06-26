@@ -437,43 +437,23 @@
 };
 
 &dsi0 {
-	/*vdda-supply = <&pm8916_l2>;
-	vddio-supply = <&pm8916_l16>;*/
 	status = "okay";
-	/*pinctrl-names = "default", "sleep";
-	pinctrl-0 = <&mdss_default>;
-	pinctrl-1 = <&mdss_sleep>;*/
-
-	ports {
-		port@1 {
-			endpoint {
-				remote-endpoint = <&panel_in>;
-				data-lanes = <0 1 2 3>;
-			};
-		};
-	};
 
 	panel@0 {
 		compatible = "boe,nt51021-10-1200p";
 		reg = <0>;
 
+		outn-supply = <&reg_lcd_neg>;
+		outp-supply = <&reg_lcd_pos>;
 		vled-supply = <&reg_lcd_vled>;
 		iovcc-supply = <&reg_lcd_iovcc>;
-		vsp-supply = <&reg_lcd_pos>;
-		vsn-supply = <&reg_lcd_neg>;
+
 		reset-gpios = <&msmgpio 25 GPIO_ACTIVE_LOW>;
 		backlight-gpios = <&msmgpio 109 GPIO_ACTIVE_HIGH>;
 
-		ports {
-			#address-cells = <1>;
-			#size-cells = <0>;
-
-			port@0 {
-				reg = <0>;
-
-				panel_in: endpoint {
-					remote-endpoint = <&dsi0_out>;
-				};
+		port {
+			panel_in: endpoint {
+				remote-endpoint = <&dsi0_out>;
 			};
 		};
 	};
@@ -843,16 +823,16 @@
 		};
 	};*/
 
-	/*speaker_amp_left_default: speaker-amp-left-default {
-		pins = "gpio2";
+	speaker_amp_default: speaker-amp-default {
+		pins = "gpio3";
 		function = "gpio";
 
 		drive-strength = <2>;
 		bias-disable;
 	};
 
-	speaker_amp_right_default: speaker-amp-right-default {
-		pins = "gpio3";
+	spk_pa_boost_default: spk-pa-boost-default {
+		pins = "gpio2";
 		function = "gpio";
 
 		drive-strength = <2>;
