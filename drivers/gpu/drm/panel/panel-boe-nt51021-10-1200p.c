@@ -37,7 +37,7 @@ struct panel_desc {
 	enum mipi_dsi_pixel_format format;
 	const struct panel_init_cmd *init_cmds;
 	unsigned int lanes;
-	bool discharge_on_disable;
+	//bool discharge_on_disable;
 };
 
 struct boe_panel {
@@ -143,6 +143,12 @@ static void disable_gpios(struct boe_panel *boe)
 	gpiod_set_value(boe->disp_vled, 0);
 	gpiod_set_value(boe->disp_iovcc, 0);
 	gpiod_set_value(boe->disp_bl, 0);
+}
+
+static void boe_bias_en(struct boe_panel *boe)
+{
+        gpiod_set_value((boe->disp_vled), 1);
+		//dev_err(dev, "failed to get disp_vled gpio: %d\n", enable);
 }
 
 static int boe_panel_init_dcs_cmd(struct boe_panel *boe)
@@ -264,12 +270,7 @@ poweroff:
 static int boe_panel_enable(struct drm_panel *panel)
 {
 	struct boe_panel *boe = to_boe_panel(panel);
-
- 	gpiod_set_value(boe->disp_vled, 1);
-	msleep(5);
-	gpiod_set_value(boe->disp_bl, 1);
-	gpiod_set_value(boe->disp_iovcc, 1);
-	msleep(500);
+    boe_bias_en(boe);
 
 	return 0;
 }
@@ -302,7 +303,7 @@ static const struct panel_desc boe_nt51021_10_desc = {
 			  MIPI_DSI_MODE_VIDEO_HSE | MIPI_DSI_MODE_NO_EOT_PACKET |
 			  MIPI_DSI_CLOCK_NON_CONTINUOUS,
 	.init_cmds = boe_init_cmd,
-	.discharge_on_disable = true,
+	//.discharge_on_disable = true,
 };
 
 static int boe_panel_get_modes(struct drm_panel *panel,
@@ -341,15 +342,14 @@ static const struct drm_panel_funcs boe_panel_funcs = {
 static int boe_panel_bl_update_status(struct backlight_device *bl)
 {
 	struct mipi_dsi_device *dsi = bl_get_data(bl);
-	struct boe_panel *boe = mipi_dsi_get_drvdata(dsi);
+	//struct boe_panel *boe = mipi_dsi_get_drvdata(dsi);
 	u16 brightness = bl->props.brightness;
 	int ret;
 
-	gpiod_set_value_cansleep(boe->disp_bl, !!brightness);
-
-	if (bl->props.power != FB_BLANK_UNBLANK ||
-	    bl->props.fb_blank != FB_BLANK_UNBLANK ||
-	    bl->props.state & (BL_CORE_SUSPENDED | BL_CORE_FBBLANK))
+	if (bl->props.power == FB_BLANK_UNBLANK &&
+	    bl->props.fb_blank == FB_BLANK_UNBLANK)
+        brightness = bl->props.brightness;
+    else
 		brightness = 0;
 
 	dsi->mode_flags &= ~MIPI_DSI_MODE_LPM;
