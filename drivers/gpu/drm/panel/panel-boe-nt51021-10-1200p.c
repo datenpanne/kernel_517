@@ -48,9 +48,9 @@ struct boe_panel {
 
 	enum drm_panel_orientation orientation;
 	struct gpio_desc *reset_gpio;
-	struct gpio_desc *disp_vdd;
-	struct gpio_desc *disp_vcc;
-	struct gpio_desc *disp_bl;
+	struct gpio_desc *vdd_gpio;
+	struct gpio_desc *vcc_gpio;
+	struct gpio_desc *blen_gpio;
 
 	bool prepared;
 };
@@ -140,16 +140,16 @@ static inline struct boe_panel *to_boe_panel(struct drm_panel *panel)
 
 static void disable_gpios(struct boe_panel *boe)
 {
-	gpiod_set_value(boe->disp_vdd, 0);
-	gpiod_set_value(boe->disp_vcc, 0);
-	gpiod_set_value(boe->disp_bl, 0);
+	gpiod_set_value(boe->vdd_gpio, 0);
+	gpiod_set_value(boe->vcc_gpio, 0);
+    gpiod_set_value(boe->blen_gpio, 0);
     gpiod_set_value(boe->reset_gpio, 0);
 }
 
 static void boe_bias_en(struct boe_panel *boe)
 {
-        gpiod_set_value((boe->disp_vdd), 1);
-		//dev_err(dev, "failed to get disp_vdd gpio: %d\n", enable);
+        gpiod_set_value((boe->vdd_gpio), 1);
+		//dev_err(dev, "failed to get vdd_gpio gpio: %d\n", enable);
 }
 
 static int boe_panel_init_dcs_cmd(struct boe_panel *boe)
@@ -247,10 +247,10 @@ static int boe_panel_prepare(struct drm_panel *panel)
 	gpiod_set_value(boe->reset_gpio, 1);
 	usleep_range(6000, 10000);
 
- 	gpiod_set_value(boe->disp_vdd, 1);
+ 	gpiod_set_value(boe->vdd_gpio, 1);
 	msleep(5);
-	gpiod_set_value(boe->disp_bl, 1);
-	gpiod_set_value(boe->disp_vcc, 1);
+	gpiod_set_value(boe->blen_gpio, 1);
+	gpiod_set_value(boe->vcc_gpio, 1);
 	msleep(500);
 
 	ret = boe_panel_init_dcs_cmd(boe);
@@ -285,7 +285,7 @@ static int boe_panel_enable(struct drm_panel *panel)
 	msleep(130);
 
     boe_bias_en(boe);
-	gpiod_set_value(boe->disp_bl, 1);
+	gpiod_set_value(boe->blen_gpio, 1);
 
 	return 0;
 }
@@ -420,18 +420,18 @@ static int boe_panel_add(struct boe_panel *boe)
 	struct mipi_dsi_device *dsi = boe->dsi;
 	int err;
 
-	boe->disp_vdd = devm_gpiod_get(dev, "vdd", GPIOD_OUT_HIGH);
-	if (IS_ERR(boe->disp_vdd)) {
+	boe->vdd_gpio = devm_gpiod_get(dev, "vdd", GPIOD_OUT_HIGH);
+	if (IS_ERR(boe->vdd_gpio)) {
 		dev_err(dev, "cannot get vled-gpios %ld\n",
-			PTR_ERR(boe->disp_vdd));
-		return PTR_ERR(boe->disp_vdd);
+			PTR_ERR(boe->vdd_gpio));
+		return PTR_ERR(boe->vdd_gpio);
 	}
 
-	boe->disp_vcc = devm_gpiod_get(dev, "vcc", GPIOD_OUT_HIGH);
-	if (IS_ERR(boe->disp_vcc)) {
+	boe->vcc_gpio = devm_gpiod_get(dev, "vcc", GPIOD_OUT_HIGH);
+	if (IS_ERR(boe->vcc_gpio)) {
 		dev_err(dev, "cannot get panel-gpios %ld\n",
-			PTR_ERR(boe->disp_vcc));
-		return PTR_ERR(boe->disp_vcc);
+			PTR_ERR(boe->vcc_gpio));
+		return PTR_ERR(boe->vcc_gpio);
 	}
 
 	boe->reset_gpio = devm_gpiod_get(dev, "reset", GPIOD_OUT_HIGH);
@@ -441,11 +441,11 @@ static int boe_panel_add(struct boe_panel *boe)
 		return PTR_ERR(boe->reset_gpio);
 	}
 
-	boe->disp_bl = devm_gpiod_get(dev, "backlight", GPIOD_OUT_LOW);
-	if (IS_ERR(boe->disp_bl)) {
+	boe->blen_gpio = devm_gpiod_get(dev, "backlight", GPIOD_OUT_LOW);
+	if (IS_ERR(boe->blen_gpio)) {
 		dev_err(dev, "cannot get backlight-gpios %ld\n",
-			PTR_ERR(boe->disp_bl));
-		return PTR_ERR(boe->disp_bl);
+			PTR_ERR(boe->blen_gpio));
+		return PTR_ERR(boe->blen_gpio);
 	}
 
 	//gpiod_set_value(boe->reset_gpio, 0);

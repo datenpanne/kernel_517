@@ -465,8 +465,8 @@
         vsp-supply = <&reg_lcd_vsp>;
         vsn-supply = <&reg_lcd_vsn>;
 
-		iovcc-gpios = <&msmgpio 97 GPIO_ACTIVE_HIGH>;
-		vled-gpios = <&msmgpio 32 GPIO_ACTIVE_HIGH>;
+		vcc-gpios = <&msmgpio 97 GPIO_ACTIVE_HIGH>;
+		vdd-gpios = <&msmgpio 32 GPIO_ACTIVE_HIGH>;
 
 		reset-gpios = <&msmgpio 25 GPIO_ACTIVE_LOW>;
 		backlight-gpios = <&msmgpio 109 GPIO_ACTIVE_HIGH>;
