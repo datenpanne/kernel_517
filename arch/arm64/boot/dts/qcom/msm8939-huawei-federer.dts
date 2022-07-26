@@ -180,10 +180,10 @@
 		};
 	};
 
-	/*reg_lcd_iovcc: iovcc {
+	reg_lcd_iovcc: vcc {
 		compatible = "regulator-fixed";
 		regulator-name = "vcc";
-		vin-supply = <&reg_lcd_vsp>;
+		//vin-supply = <&reg_lcd_vsp>;
 		//regulator-min-microvolt = <1400000>;
 		//regulator-max-microvolt = <1600000>;
 		gpio = <&msmgpio 97 GPIO_ACTIVE_HIGH>;
@@ -196,8 +196,8 @@
 
 	reg_lcd_vdd: lcd-vdd {
 		compatible = "regulator-fixed";
-		regulator-name = "lcd-vdd";
-		vin-supply = <&reg_lcd_vsn>;
+		regulator-name = "vdd";
+		//vin-supply = <&reg_lcd_vsn>;
 		//regulator-min-microvolt = <2700000>;
 		//regulator-max-microvolt = <3600000>;
 		gpio = <&msmgpio 32 GPIO_ACTIVE_HIGH>;
@@ -206,7 +206,21 @@
 		regulator-boot-on;
 		pinctrl-names = "default";
 		pinctrl-0 = <&lcd_vdd_default>;
-	};*/
+	};
+
+	reg_lcd_blen: lcd-blen {
+		compatible = "regulator-fixed";
+		regulator-name = "blen";
+		//vin-supply = <&reg_lcd_vsn>;
+		//regulator-min-microvolt = <2700000>;
+		//regulator-max-microvolt = <3600000>;
+		gpio = <&msmgpio 109 GPIO_ACTIVE_HIGH>;
+		enable-active-high;
+		regulator-always-on;
+		regulator-boot-on;
+		pinctrl-names = "default";
+		pinctrl-0 = <&lcd_blen_default>;
+	};
 
 	reg_lcd_vsp: regulator-lcd-vsp {
 		compatible = "regulator-fixed";
@@ -465,11 +479,15 @@
         vsp-supply = <&reg_lcd_vsp>;
         vsn-supply = <&reg_lcd_vsn>;
 
-		vcc-gpios = <&msmgpio 97 GPIO_ACTIVE_HIGH>;
-		vdd-gpios = <&msmgpio 32 GPIO_ACTIVE_HIGH>;
+        vcc-supply = <&reg_lcd_vsp>;
+        vdd-supply = <&reg_lcd_vsn>;
+        blen-supply = <&reg_lcd_vsn>;
+
+		//vcc-gpios = <&msmgpio 97 GPIO_ACTIVE_HIGH>;
+		//vdd-gpios = <&msmgpio 32 GPIO_ACTIVE_HIGH>;
 
 		reset-gpios = <&msmgpio 25 GPIO_ACTIVE_LOW>;
-		backlight-gpios = <&msmgpio 109 GPIO_ACTIVE_HIGH>;
+		//backlight-gpios = <&msmgpio 109 GPIO_ACTIVE_HIGH>;
 
 		ports {
 			#address-cells = <1>;
@@ -800,7 +818,7 @@
 		bias-disable;
 	};
 
-	/*lcd_iovcc_default: lcd-iovcc-default {
+	lcd_vcc_default: lcd-vcc-default {
 		pins = "gpio97";
 		function = "gpio";
 
@@ -808,13 +826,21 @@
 		output-low;
 	};
 
-	lcd_vled_default: lcd-vled-default {
+	lcd_vdd_default: lcd-vdd-default {
 		pins = "gpio32";
 		function = "gpio";
 
 		drive-strength = <2>;
 		output-low;
-	};*/
+	};
+
+	lcd_blen_default: lcd-blen-default {
+		pins = "gpio109";
+		function = "gpio";
+
+		drive-strength = <2>;
+		output-low;
+	};
 
 	mdss {
 		mdss_default: mdss-default {
