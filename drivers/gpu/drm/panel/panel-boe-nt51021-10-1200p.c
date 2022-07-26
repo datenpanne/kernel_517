@@ -53,6 +53,7 @@ struct boe_panel {
 	struct gpio_desc *blen_gpio;
 
 	bool prepared;
+	bool panel_bias_vreg;
 };
 
 enum dsi_cmd_type {
@@ -148,8 +149,9 @@ static void disable_gpios(struct boe_panel *boe)
 
 static void boe_bias_en(struct boe_panel *boe)
 {
-        gpiod_set_value((boe->vdd_gpio), 1);
-		//dev_err(dev, "failed to get vdd_gpio gpio: %d\n", enable);
+    boe->panel_bias_vreg = true;
+    gpiod_set_value((boe->vdd_gpio), 1);
+    //dev_err(dev, "failed to get vdd_gpio gpio: %d\n", enable);
 }
 
 static int boe_panel_init_dcs_cmd(struct boe_panel *boe)
@@ -240,18 +242,18 @@ static int boe_panel_prepare(struct drm_panel *panel)
 	if (boe->prepared)
 		return 0;
 
+ 	gpiod_set_value(boe->vdd_gpio, 1);
+	msleep(5);
+	gpiod_set_value(boe->blen_gpio, 1);
+	gpiod_set_value(boe->vcc_gpio, 1);
+	msleep(500);
+
 	gpiod_set_value(boe->reset_gpio, 1);
 	usleep_range(1000, 2000);
 	gpiod_set_value(boe->reset_gpio, 0);
 	usleep_range(1000, 2000);
 	gpiod_set_value(boe->reset_gpio, 1);
 	usleep_range(6000, 10000);
-
- 	gpiod_set_value(boe->vdd_gpio, 1);
-	msleep(5);
-	gpiod_set_value(boe->blen_gpio, 1);
-	gpiod_set_value(boe->vcc_gpio, 1);
-	msleep(500);
 
 	ret = boe_panel_init_dcs_cmd(boe);
 	if (ret < 0) {
@@ -266,7 +268,6 @@ static int boe_panel_prepare(struct drm_panel *panel)
 		dev_err(panel->dev, "failed to enable vblank TE (%d)\n", ret);
 		goto poweroff;
 	}
-
 
 	boe->prepared = true;
 
@@ -285,7 +286,7 @@ static int boe_panel_enable(struct drm_panel *panel)
 	msleep(130);
 
     boe_bias_en(boe);
-	gpiod_set_value(boe->blen_gpio, 1);
+	//gpiod_set_value(boe->blen_gpio, 1);
 
 	return 0;
 }
@@ -357,9 +358,11 @@ static const struct drm_panel_funcs boe_panel_funcs = {
 static int boe_panel_bl_update_status(struct backlight_device *bl)
 {
 	struct mipi_dsi_device *dsi = bl_get_data(bl);
-	//struct boe_panel *boe = mipi_dsi_get_drvdata(dsi);
+	struct boe_panel *boe = mipi_dsi_get_drvdata(dsi);
 	u16 brightness = bl->props.brightness;
 	int ret;
+
+    gpiod_set_value(boe->blen_gpio, 1);
 
 	if (bl->props.power == FB_BLANK_UNBLANK &&
 	    bl->props.fb_blank == FB_BLANK_UNBLANK)
@@ -422,7 +425,7 @@ static int boe_panel_add(struct boe_panel *boe)
 
 	boe->vdd_gpio = devm_gpiod_get(dev, "vdd", GPIOD_OUT_HIGH);
 	if (IS_ERR(boe->vdd_gpio)) {
-		dev_err(dev, "cannot get vled-gpios %ld\n",
+		dev_err(dev, "cannot get vdd-gpios %ld\n",
 			PTR_ERR(boe->vdd_gpio));
 		return PTR_ERR(boe->vdd_gpio);
 	}
