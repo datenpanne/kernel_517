@@ -33,7 +33,7 @@
 
 	reserved-memory {
 		/delete-node/ venus@90000000;
-		/delete-node/ rmtfs@86681000;
+		// /delete-node/ rmtfs@86681000;
 		/delete-node/ rfsa@867e0000;
 		/delete-node/ mba@8ea00000;
 
@@ -48,13 +48,13 @@
 			no-map;
 		};
 
-		rmtfs@86700000 {
+		/*rmtfs@86700000 {
 			compatible = "qcom,rmtfs-mem";
 			//reg = <0x0 0x86690000 0x0 0x100000>;
 			reg = <0x0 0x86700000 0x0 0x200000>;
 			no-map;
 			qcom,client-id = <1>;
-		};
+		};*/
 
 		gps_mem: gps@8c400000 {
 			status = "disabled";
@@ -180,10 +180,12 @@
 		};
 	};
 
-	reg_lcd_iovcc: iovcc {
+	/*reg_lcd_iovcc: iovcc {
 		compatible = "regulator-fixed";
 		regulator-name = "vcc";
-		//vin-supply = <&reg_lcd_pos>;	
+		vin-supply = <&reg_lcd_vsp>;
+		//regulator-min-microvolt = <1400000>;
+		//regulator-max-microvolt = <1600000>;
 		gpio = <&msmgpio 97 GPIO_ACTIVE_HIGH>;
 		enable-active-high;
 		regulator-always-on;
@@ -192,17 +194,19 @@
 		pinctrl-0 = <&lcd_iovcc_default>;
 	};
 
-	reg_lcd_vled: vled {
+	reg_lcd_vdd: lcd-vdd {
 		compatible = "regulator-fixed";
-		regulator-name = "vled";
-		//vin-supply = <&reg_lcd_neg>;		
+		regulator-name = "lcd-vdd";
+		vin-supply = <&reg_lcd_vsn>;
+		//regulator-min-microvolt = <2700000>;
+		//regulator-max-microvolt = <3600000>;
 		gpio = <&msmgpio 32 GPIO_ACTIVE_HIGH>;
 		enable-active-high;
 		regulator-always-on;
 		regulator-boot-on;
 		pinctrl-names = "default";
-		pinctrl-0 = <&lcd_vled_default>;
-	};
+		pinctrl-0 = <&lcd_vdd_default>;
+	};*/
 
 	reg_lcd_vsp: regulator-lcd-vsp {
 		compatible = "regulator-fixed";
@@ -438,8 +442,6 @@
 };
 
 &dsi0 {
-    vsp-supply = <&reg_lcd_vsp>;
-    vsn-supply = <&reg_lcd_vsn>;
 	/*vdda-supply = <&pm8916_l2>;
 	vddio-supply = <&pm8916_l16>;*/
 	status = "okay";
@@ -460,8 +462,11 @@
 		compatible = "boe,nt51021-10-1200p";
 		reg = <0>;
 
-		vled-supply = <&reg_lcd_vled>;
-		iovcc-supply = <&reg_lcd_iovcc>;
+        vsp-supply = <&reg_lcd_vsp>;
+        vsn-supply = <&reg_lcd_vsn>;
+
+		iovcc-gpios = <&msmgpio 97 GPIO_ACTIVE_HIGH>;
+		vled-gpios = <&msmgpio 32 GPIO_ACTIVE_HIGH>;
 
 		reset-gpios = <&msmgpio 25 GPIO_ACTIVE_LOW>;
 		backlight-gpios = <&msmgpio 109 GPIO_ACTIVE_HIGH>;
@@ -795,7 +800,7 @@
 		bias-disable;
 	};
 
-	lcd_iovcc_default: lcd-iovcc-default {
+	/*lcd_iovcc_default: lcd-iovcc-default {
 		pins = "gpio97";
 		function = "gpio";
 
@@ -809,7 +814,7 @@
 
 		drive-strength = <2>;
 		output-low;
-	};
+	};*/
 
 	mdss {
 		mdss_default: mdss-default {
