@@ -180,7 +180,7 @@
 		};
 	};
 
-	reg_lcd_iovcc: vcc {
+	reg_lcd_vcc: vcc {
 		compatible = "regulator-fixed";
 		regulator-name = "vcc";
 		//vin-supply = <&reg_lcd_vsp>;
@@ -191,7 +191,7 @@
 		regulator-always-on;
 		regulator-boot-on;
 		pinctrl-names = "default";
-		pinctrl-0 = <&lcd_iovcc_default>;
+		pinctrl-0 = <&lcd_vcc_default>;
 	};
 
 	reg_lcd_vdd: lcd-vdd {
@@ -456,6 +456,8 @@
 };
 
 &dsi0 {
+        vsp-supply = <&reg_lcd_vsp>;
+        vsn-supply = <&reg_lcd_vsn>;
 	/*vdda-supply = <&pm8916_l2>;
 	vddio-supply = <&pm8916_l16>;*/
 	status = "okay";
@@ -476,12 +478,9 @@
 		compatible = "boe,nt51021-10-1200p";
 		reg = <0>;
 
-        vsp-supply = <&reg_lcd_vsp>;
-        vsn-supply = <&reg_lcd_vsn>;
-
-        vcc-supply = <&reg_lcd_vsp>;
-        vdd-supply = <&reg_lcd_vsn>;
-        blen-supply = <&reg_lcd_vsn>;
+        vcc-supply = <&reg_lcd_vcc>;
+        vdd-supply = <&reg_lcd_vdd>;
+        blen-supply = <&reg_lcd_blen>;
 
 		//vcc-gpios = <&msmgpio 97 GPIO_ACTIVE_HIGH>;
 		//vdd-gpios = <&msmgpio 32 GPIO_ACTIVE_HIGH>;
