@@ -184,7 +184,7 @@
 		compatible = "regulator-fixed";
 		regulator-name = "vcc";
 		//vin-supply = <&reg_lcd_vsp>;
-		regulator-min-microvolt = <1400000>;
+		regulator-min-microvolt = <1600000>;
 		regulator-max-microvolt = <1600000>;
 		gpio = <&msmgpio 97 GPIO_ACTIVE_HIGH>;
 		enable-active-high;
@@ -198,7 +198,7 @@
 		compatible = "regulator-fixed";
 		regulator-name = "vdd";
 		//vin-supply = <&reg_lcd_vsn>;
-		regulator-min-microvolt = <2700000>;
+		regulator-min-microvolt = <3600000>;
 		regulator-max-microvolt = <3600000>;
 		gpio = <&msmgpio 32 GPIO_ACTIVE_HIGH>;
 		enable-active-high;
