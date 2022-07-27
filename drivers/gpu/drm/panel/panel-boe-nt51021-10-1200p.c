@@ -5,12 +5,9 @@
 
 #include <linux/backlight.h>
 #include <linux/delay.h>
-#include <linux/gpio/consumer.h>
 #include <linux/module.h>
 #include <linux/of.h>
 #include <linux/regulator/consumer.h>
-
-#include <video/mipi_display.h>
 
 #include <drm/drm_mipi_dsi.h>
 #include <drm/drm_modes.h>
@@ -19,8 +16,8 @@
 struct boe_nt51021_10_1200p {
 	struct drm_panel panel;
 	struct mipi_dsi_device *dsi;
-	struct regulator_bulk_data supplies[3];
-	struct gpio_desc *reset_gpio;
+	struct regulator_bulk_data supplies[2];
+	struct gpio_desc *backlight_gpio;
 	bool prepared;
 };
 
@@ -30,23 +27,13 @@ struct boe_nt51021_10_1200p *to_boe_nt51021_10_1200p(struct drm_panel *panel)
 	return container_of(panel, struct boe_nt51021_10_1200p, panel);
 }
 
-#define dsi_dcs_write_seq(dsi, seq...) do {				\
+#define dsi_generic_write_seq(dsi, seq...) do {				\
 		static const u8 d[] = { seq };				\
 		int ret;						\
-		ret = mipi_dsi_dcs_write_buffer(dsi, d, ARRAY_SIZE(d));	\
+		ret = mipi_dsi_generic_write(dsi, d, ARRAY_SIZE(d));	\
 		if (ret < 0)						\
 			return ret;					\
 	} while (0)
-
-static void boe_nt51021_10_1200p_reset(struct boe_nt51021_10_1200p *ctx)
-{
-	gpiod_set_value_cansleep(ctx->reset_gpio, 0);
-	usleep_range(1000, 2000);
-	gpiod_set_value_cansleep(ctx->reset_gpio, 1);
-	msleep(20);
-	gpiod_set_value_cansleep(ctx->reset_gpio, 0);
-	msleep(30);
-}
 
 static int boe_nt51021_10_1200p_on(struct boe_nt51021_10_1200p *ctx)
 {
@@ -54,50 +41,22 @@ static int boe_nt51021_10_1200p_on(struct boe_nt51021_10_1200p *ctx)
 	struct device *dev = &dsi->dev;
 	int ret;
 
-	dsi->mode_flags |= MIPI_DSI_MODE_LPM;
-
-	dsi_dcs_write_seq(dsi, 0x83, 0x00);
-	dsi_dcs_write_seq(dsi, 0x84, 0x00);
-	dsi_dcs_write_seq(dsi, 0x8c, 0x80);
-	dsi_dcs_write_seq(dsi, 0xcd, 0x6c);
-	dsi_dcs_write_seq(dsi, 0xc8, 0xfc);
-	dsi_dcs_write_seq(dsi, 0x9f, 0x00);
-	dsi_dcs_write_seq(dsi, 0x97, 0x00);
-	dsi_dcs_write_seq(dsi, 0x83, 0xbb);
-	dsi_dcs_write_seq(dsi, 0x84, 0x22);
-	dsi_dcs_write_seq(dsi, 0x96, 0x00);
-	dsi_dcs_write_seq(dsi, 0x90, 0xc0);
-	dsi_dcs_write_seq(dsi, 0x91, 0xa0);
-	dsi_dcs_write_seq(dsi, 0x9a, 0x10);
-	dsi_dcs_write_seq(dsi, 0x94, 0x78);
-	dsi_dcs_write_seq(dsi, 0x95, 0xb1);
-	dsi_dcs_write_seq(dsi, MIPI_DCS_READ_DDB_START, 0xff);
-	dsi_dcs_write_seq(dsi, MIPI_DCS_READ_PPS_START, 0xfa);
-	dsi_dcs_write_seq(dsi, 0xa3, 0xf3);
-	dsi_dcs_write_seq(dsi, 0xa4, 0xed);
-	dsi_dcs_write_seq(dsi, 0xa5, 0xe7);
-	dsi_dcs_write_seq(dsi, 0xa6, 0xe2);
-	dsi_dcs_write_seq(dsi, 0xa7, 0xdc);
-	dsi_dcs_write_seq(dsi, MIPI_DCS_READ_DDB_CONTINUE, 0xd7);
-	dsi_dcs_write_seq(dsi, MIPI_DCS_READ_PPS_CONTINUE, 0xd1);
-	dsi_dcs_write_seq(dsi, 0xaa, 0xcc);
-	dsi_dcs_write_seq(dsi, 0xb4, 0x1c);
-	dsi_dcs_write_seq(dsi, 0xb5, 0x38);
-	dsi_dcs_write_seq(dsi, 0xb6, 0x30);
-	dsi_dcs_write_seq(dsi, 0x83, 0xaa);
-	dsi_dcs_write_seq(dsi, 0x84, 0x11);
-	dsi_dcs_write_seq(dsi, MIPI_DCS_READ_PPS_CONTINUE, 0x4b);
-	dsi_dcs_write_seq(dsi, 0x85, 0x04);
-	dsi_dcs_write_seq(dsi, 0x86, 0x08);
-	dsi_dcs_write_seq(dsi, 0x9c, 0x10);
-	dsi_dcs_write_seq(dsi, 0x83, 0x00);
-	dsi_dcs_write_seq(dsi, 0x84, 0x00);
-
-	ret = mipi_dsi_dcs_set_tear_on(dsi, MIPI_DSI_DCS_TEAR_MODE_VBLANK);
-	if (ret < 0) {
-		dev_err(dev, "Failed to set tear on: %d\n", ret);
-		return ret;
-	}
+	dsi_generic_write_seq(dsi, 0x8f, 0xa5);
+	usleep_range(1000, 2000);
+	dsi_generic_write_seq(dsi, 0x83, 0x00);
+	dsi_generic_write_seq(dsi, 0x84, 0x00);
+	dsi_generic_write_seq(dsi, 0x8c, 0x80);
+	dsi_generic_write_seq(dsi, 0xcd, 0x6c);
+	dsi_generic_write_seq(dsi, 0xc8, 0xfc);
+	dsi_generic_write_seq(dsi, 0x97, 0x00);
+	dsi_generic_write_seq(dsi, 0x8b, 0x10);
+	dsi_generic_write_seq(dsi, 0xa9, 0x20);
+	dsi_generic_write_seq(dsi, 0x83, 0xaa);
+	dsi_generic_write_seq(dsi, 0x84, 0x11);
+	dsi_generic_write_seq(dsi, 0xa9, 0x4b);
+	dsi_generic_write_seq(dsi, 0x85, 0x04);
+	dsi_generic_write_seq(dsi, 0x86, 0x08);
+	dsi_generic_write_seq(dsi, 0x9c, 0x10);
 
 	ret = mipi_dsi_dcs_exit_sleep_mode(dsi);
 	if (ret < 0) {
@@ -105,17 +64,27 @@ static int boe_nt51021_10_1200p_on(struct boe_nt51021_10_1200p *ctx)
 		return ret;
 	}
 
+	dsi_generic_write_seq(dsi, 0x8f, 0x00);
+
 	return 0;
 }
 
 static int boe_nt51021_10_1200p_off(struct boe_nt51021_10_1200p *ctx)
 {
 	struct mipi_dsi_device *dsi = ctx->dsi;
+	struct device *dev = &dsi->dev;
+	int ret;
 
-	dsi->mode_flags &= ~MIPI_DSI_MODE_LPM;
+	dsi_generic_write_seq(dsi, 0x83, 0x00);
+	dsi_generic_write_seq(dsi, 0x84, 0x00);
+	msleep(120);
 
-	dsi_dcs_write_seq(dsi, 0x10, 0x00);
-	msleep(100);
+	ret = mipi_dsi_dcs_enter_sleep_mode(dsi);
+	if (ret < 0) {
+		dev_err(dev, "Failed to enter sleep mode: %d\n", ret);
+		return ret;
+	}
+	msleep(120);
 
 	return 0;
 }
@@ -135,12 +104,9 @@ static int boe_nt51021_10_1200p_prepare(struct drm_panel *panel)
 		return ret;
 	}
 
-	boe_nt51021_10_1200p_reset(ctx);
-
 	ret = boe_nt51021_10_1200p_on(ctx);
 	if (ret < 0) {
 		dev_err(dev, "Failed to initialize panel: %d\n", ret);
-		gpiod_set_value_cansleep(ctx->reset_gpio, 1);
 		regulator_bulk_disable(ARRAY_SIZE(ctx->supplies), ctx->supplies);
 		return ret;
 	}
@@ -162,7 +128,6 @@ static int boe_nt51021_10_1200p_unprepare(struct drm_panel *panel)
 	if (ret < 0)
 		dev_err(dev, "Failed to un-initialize panel: %d\n", ret);
 
-	gpiod_set_value_cansleep(ctx->reset_gpio, 1);
 	regulator_bulk_disable(ARRAY_SIZE(ctx->supplies), ctx->supplies);
 
 	ctx->prepared = false;
@@ -170,17 +135,17 @@ static int boe_nt51021_10_1200p_unprepare(struct drm_panel *panel)
 }
 
 static const struct drm_display_mode boe_nt51021_10_1200p_mode = {
-	.clock = (1200 + 64 + 4 + 36) * (1920 + 104 + 2 + 24) * 60 / 1000,
+	.clock = (1200 + 100 + 1 + 32) * (1920 + 25 + 1 + 14) * 60 / 1000,
 	.hdisplay = 1200,
-	.hsync_start = 1200 + 64,
-	.hsync_end = 1200 + 64 + 4,
-	.htotal = 1200 + 64 + 4 + 36,
+	.hsync_start = 1200 + 100,
+	.hsync_end = 1200 + 100 + 1,
+	.htotal = 1200 + 100 + 1 + 32,
 	.vdisplay = 1920,
-	.vsync_start = 1920 + 104,
-	.vsync_end = 1920 + 104 + 2,
-	.vtotal = 1920 + 104 + 2 + 24,
+	.vsync_start = 1920 + 25,
+	.vsync_end = 1920 + 25 + 1,
+	.vtotal = 1920 + 25 + 1 + 14,
 	.width_mm = 135,
-	.height_mm = 217,
+	.height_mm = 216,
 };
 
 static int boe_nt51021_10_1200p_get_modes(struct drm_panel *panel,
@@ -211,8 +176,11 @@ static const struct drm_panel_funcs boe_nt51021_10_1200p_panel_funcs = {
 static int boe_nt51021_10_1200p_bl_update_status(struct backlight_device *bl)
 {
 	struct mipi_dsi_device *dsi = bl_get_data(bl);
+	struct boe_nt51021_10_1200p *ctx = mipi_dsi_get_drvdata(dsi);
 	u16 brightness = backlight_get_brightness(bl);
 	int ret;
+
+	gpiod_set_value_cansleep(ctx->backlight_gpio, !!brightness);
 
 	dsi->mode_flags &= ~MIPI_DSI_MODE_LPM;
 
@@ -225,8 +193,28 @@ static int boe_nt51021_10_1200p_bl_update_status(struct backlight_device *bl)
 	return 0;
 }
 
+// TODO: Check if /sys/class/backlight/.../actual_brightness actually returns
+// correct values. If not, remove this function.
+static int boe_nt51021_10_1200p_bl_get_brightness(struct backlight_device *bl)
+{
+	struct mipi_dsi_device *dsi = bl_get_data(bl);
+	u16 brightness;
+	int ret;
+
+	dsi->mode_flags &= ~MIPI_DSI_MODE_LPM;
+
+	ret = mipi_dsi_dcs_get_display_brightness(dsi, &brightness);
+	if (ret < 0)
+		return ret;
+
+	dsi->mode_flags |= MIPI_DSI_MODE_LPM;
+
+	return brightness & 0xff;
+}
+
 static const struct backlight_ops boe_nt51021_10_1200p_bl_ops = {
 	.update_status = boe_nt51021_10_1200p_bl_update_status,
+	.get_brightness = boe_nt51021_10_1200p_bl_get_brightness,
 };
 
 static struct backlight_device *
@@ -235,7 +223,7 @@ boe_nt51021_10_1200p_create_backlight(struct mipi_dsi_device *dsi)
 	struct device *dev = &dsi->dev;
 	const struct backlight_properties props = {
 		.type = BACKLIGHT_RAW,
-		.brightness = 128,
+		.brightness = 255,
 		.max_brightness = 255,
 	};
 
@@ -253,18 +241,17 @@ static int boe_nt51021_10_1200p_probe(struct mipi_dsi_device *dsi)
 	if (!ctx)
 		return -ENOMEM;
 
-	ctx->supplies[0].supply = "vcc";
-	ctx->supplies[1].supply = "vdd";
-	ctx->supplies[2].supply = "blen";
+	ctx->supplies[0].supply = "vdd";
+	ctx->supplies[1].supply = "vcc";
 	ret = devm_regulator_bulk_get(dev, ARRAY_SIZE(ctx->supplies),
 				      ctx->supplies);
 	if (ret < 0)
 		return dev_err_probe(dev, ret, "Failed to get regulators\n");
 
-	ctx->reset_gpio = devm_gpiod_get(dev, "reset", GPIOD_OUT_HIGH);
-	if (IS_ERR(ctx->reset_gpio))
-		return dev_err_probe(dev, PTR_ERR(ctx->reset_gpio),
-				     "Failed to get reset-gpios\n");
+	ctx->backlight_gpio = devm_gpiod_get(dev, "backlight", GPIOD_OUT_LOW);
+	if (IS_ERR(ctx->backlight_gpio))
+		return dev_err_probe(dev, PTR_ERR(ctx->backlight_gpio),
+				     "Failed to get backlight-gpios\n");
 
 	ctx->dsi = dsi;
 	mipi_dsi_set_drvdata(dsi, ctx);
@@ -272,8 +259,8 @@ static int boe_nt51021_10_1200p_probe(struct mipi_dsi_device *dsi)
 	dsi->lanes = 4;
 	dsi->format = MIPI_DSI_FMT_RGB888;
 	dsi->mode_flags = MIPI_DSI_MODE_VIDEO | MIPI_DSI_MODE_VIDEO_BURST |
-			  MIPI_DSI_MODE_VIDEO_HSE | MIPI_DSI_MODE_NO_EOT_PACKET |
-			  MIPI_DSI_CLOCK_NON_CONTINUOUS;
+			  MIPI_DSI_MODE_VIDEO_HSE | MIPI_DSI_MODE_EOT_PACKET |
+			  MIPI_DSI_MODE_LPM;
 
 	drm_panel_init(&ctx->panel, dev, &boe_nt51021_10_1200p_panel_funcs,
 		       DRM_MODE_CONNECTOR_DSI);
