@@ -184,8 +184,8 @@
 		compatible = "regulator-fixed";
 		regulator-name = "vcc";
 		//vin-supply = <&reg_lcd_vsp>;
-		//regulator-min-microvolt = <1400000>;
-		//regulator-max-microvolt = <1600000>;
+		regulator-min-microvolt = <1400000>;
+		regulator-max-microvolt = <1600000>;
 		gpio = <&msmgpio 97 GPIO_ACTIVE_HIGH>;
 		enable-active-high;
 		regulator-always-on;
@@ -194,7 +194,7 @@
 		pinctrl-0 = <&lcd_vcc_default>;
 	};
 
-	reg_lcd_vdd: lcd-vdd {
+	/*reg_lcd_vdd: lcd-vdd {
 		compatible = "regulator-fixed";
 		regulator-name = "vdd";
 		//vin-supply = <&reg_lcd_vsn>;
@@ -206,7 +206,7 @@
 		regulator-boot-on;
 		pinctrl-names = "default";
 		pinctrl-0 = <&lcd_vdd_default>;
-	};
+	};*/
 
 	reg_lcd_blen: lcd-blen {
 		compatible = "regulator-fixed";
@@ -479,7 +479,7 @@
 		reg = <0>;
 
         vcc-supply = <&reg_lcd_vcc>;
-        vdd-supply = <&reg_lcd_vdd>;
+        vdd-supply = <&pm8916_l16>;
         blen-supply = <&reg_lcd_blen>;
 
 		//vcc-gpios = <&msmgpio 97 GPIO_ACTIVE_HIGH>;
