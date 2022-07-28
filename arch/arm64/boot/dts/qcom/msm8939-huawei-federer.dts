@@ -456,11 +456,9 @@
 };
 
 &dsi0 {
-        vsp-supply = <&reg_lcd_vsp>;
-        vsn-supply = <&reg_lcd_vsn>;
-	/*vdda-supply = <&pm8916_l2>;
-	vddio-supply = <&pm8916_l16>;*/
 	status = "okay";
+	vdda-supply = <&pm8916_l9>;
+	vddio-supply = <&pm8916_l6>;
 	/*pinctrl-names = "default", "sleep";
 	pinctrl-0 = <&mdss_default>;
 	pinctrl-1 = <&mdss_sleep>;*/
