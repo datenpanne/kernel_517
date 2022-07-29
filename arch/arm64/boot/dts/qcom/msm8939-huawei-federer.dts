@@ -691,6 +691,7 @@
 		pm8916_l6: l6 {
 			regulator-min-microvolt = <1800000>;
 			regulator-max-microvolt = <1800000>;
+			regulator-boot-on;
 			regulator-always-on;
 		};
 
@@ -744,11 +745,14 @@
 		pm8916_l16: l16 {
 			regulator-min-microvolt = <1800000>;
 			regulator-max-microvolt = <3300000>;
+			regulator-boot-on;
 		};
 
 		pm8916_l17: l17 {
 			regulator-min-microvolt = <2850000>;
 			regulator-max-microvolt = <2850000>;
+			regulator-boot-on;
+			regulator-always-on;
 		};
 
 		pm8916_l18: l18 {
