@@ -180,7 +180,7 @@
 		};
 	};
 
-	reg_lcd_vcc: vcc {
+	/*reg_lcd_vcc: vcc {
 		compatible = "regulator-fixed";
 		regulator-name = "vcc";
 		//vin-supply = <&reg_lcd_vsp>;
@@ -206,7 +206,7 @@
 		regulator-boot-on;
 		pinctrl-names = "default";
 		pinctrl-0 = <&lcd_vdd_default>;
-	};
+	};*/
 
 	/*reg_lcd_blen: lcd-blen {
 		compatible = "regulator-fixed";
@@ -473,15 +473,16 @@
 	};
 
 	panel@0 {
-		compatible = "boe,nt51021-10-1200p";
+		compatible = "huawei,federer-panel";
+		//compatible = "boe,nt51021-10-1200p";
 		reg = <0>;
 
-        vcc-supply = <&reg_lcd_vcc>;
-        vdd-supply = <&reg_lcd_vdd>;
+        vsp-supply = <&reg_lcd_vsp>;
+        vsn-supply = <&reg_lcd_vsn>;
         //blen-supply = <&reg_lcd_blen>;
 
-		//vcc-gpios = <&msmgpio 97 GPIO_ACTIVE_HIGH>;
-		//vdd-gpios = <&msmgpio 32 GPIO_ACTIVE_HIGH>;
+		enable-gpios = <&msmgpio 97 GPIO_ACTIVE_HIGH>;
+		panel-gpios = <&msmgpio 32 GPIO_ACTIVE_HIGH>;
 
 		reset-gpios = <&msmgpio 25 GPIO_ACTIVE_LOW>;
 		backlight-gpios = <&msmgpio 109 GPIO_ACTIVE_HIGH>;
