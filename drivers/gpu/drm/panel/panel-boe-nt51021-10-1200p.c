@@ -19,7 +19,7 @@
 struct hw_nt51021 {
 	struct drm_panel panel;
 	struct mipi_dsi_device *dsi;
-	struct regulator_bulk_data supplies[3];
+	struct regulator_bulk_data supplies[2];
 	struct gpio_desc *reset_gpio;
 	struct gpio_desc *disp_power_backlight;
 	struct gpio_desc *disp_power_panel;

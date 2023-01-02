@@ -300,6 +300,17 @@
 	status = "okay";
 };
 
+&blsp_spi1 { // for speaker
+    gpio-mosi = <&msmgpio 0 0>;
+    gpio-sck = <&msmgpio 3 0>;
+    gpio-miso = <&msmgpio 1 0>;
+    cs-gpios = <&msmgpio 2 0>;
+};
+
+&blsp_i2c1 {
+	status = "okay";
+};
+
 &blsp_i2c2 {
 	status = "okay";
 
