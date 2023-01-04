@@ -21,30 +21,52 @@ struct hw_nt51021 {
 	struct mipi_dsi_device *dsi;
 	struct regulator_bulk_data supplies[2];
 	struct gpio_desc *reset_gpio;
-	struct gpio_desc *disp_power_backlight;
+	struct gpio_desc *vci_gpio; //vdd?
+	struct gpio_desc *iovcc_gpio; //vddio?
+	struct gpio_desc *backlight_gpio; //vled
+	/*struct gpio_desc *disp_power_backlight;
 	struct gpio_desc *disp_power_panel;
-	struct gpio_desc *disp_en_gpio_vled;
+	struct gpio_desc *disp_en_gpio_vled;*/
 
 	bool prepared;
 	bool enabled;
 };
 
-#define HW_NT51021_VND_A1 0xa1
+#define HW_NT51021_VND_MIPI 0x8f
+#define HW_NT51021_VND_INDEX0 0x83
+#define HW_NT51021_VND_INDEX1 0x84
+#define HW_NT51021_VND_GIP 0x8c
+#define HW_NT51021_VND_3D 0xcd
+#define HW_NT51021_VND_DCH 0xc8
+#define HW_NT51021_VND_TERMRESIST 0x97
+#define HW_NT51021_VND_TESTMODE1 0x85
+#define HW_NT51021_VND_TESTMODE2 0x86
+#define HW_NT51021_VND_TESTMODE3 0x9c
+#define HW_NT51021_VND_A9 0xa9
+#define HW_NT51021_VND_HSYNC 0x8b
+
+#define HW_NT51021_SET_DISPLAY_BRIGHTNESS 0x9f
+/*#define HW_NT51021_VND_A1 0xa1
 #define HW_NT51021_VND_A2 0xa2
 #define HW_NT51021_VND_A8 0xa8
 #define HW_NT51021_VND_A9 0xa9
-#define HW_NT51021_INDEX0 0x83
-#define HW_NT51021_INDEX1 0x84
-#define HW_NT51021_SET_DISPLAY_BRIGHTNESS 0x9f
 #define HW_NT51021_CABC_MODE 0x90 // 0xc0 off| 0x00 on
 #define HW_NT51021_CABC_STILL_DIMMING 0x95 // 0xB0 off| 0x60 on
-#define HW_NT51021_CABC_MOVING_DIMMING 0x94 // 0x18
+#define HW_NT51021_CABC_MOVING_DIMMING 0x94 // 0x18*/
 
 static inline
 struct hw_nt51021 *to_hw_nt51021(struct drm_panel *panel)
 {
 	return container_of(panel, struct hw_nt51021, panel);
 }
+
+#define dsi_generic_write_seq(dsi, seq...) do {				\
+		static const u8 d[] = { seq };				\
+		int ret;						\
+		ret = mipi_dsi_generic_write(dsi, d, ARRAY_SIZE(d));	\
+		if (ret < 0)						\
+			return ret;					\
+	} while (0)
 
 #define dsi_dcs_write_seq(dsi, seq...) do {				\
 		static const u8 d[] = { seq };				\
@@ -102,15 +124,41 @@ static int hw_nt51021_init(struct hw_nt51021 *ctx)
 
 	dsi->mode_flags |= MIPI_DSI_MODE_LPM;
 
-	dsi_dcs_write_seq(dsi, HW_NT51021_INDEX0, 0x00);
-	dsi_dcs_write_seq(dsi, HW_NT51021_INDEX1, 0x00);
+	dsi_generic_write_seq(dsi, HW_NT51021_VND_MIPI, 0xa5); // i2c --> MIPI
+        msleep(5);
+	ret = mipi_dsi_dcs_soft_reset(dsi);
+	if (ret < 0) {
+		dev_err(dev, "Failed to do Software Reset: %d\n", ret);
+		return ret;
+	}
+	msleep(20);
+	dsi_generic_write_seq(dsi, HW_NT51021_VND_MIPI, 0xa5); // MIPI enable command
+        msleep(5);
+	dsi_generic_write_seq(dsi, HW_NT51021_VND_INDEX0, 0x00); // command page 0
+	dsi_generic_write_seq(dsi, HW_NT51021_VND_INDEX1, 0x00); // command page 0
+	dsi_generic_write_seq(dsi, HW_NT51021_VND_GIP, 0x80); // GIP unlock OTP
+	dsi_generic_write_seq(dsi, HW_NT51021_VND_3D, 0x6c); // 3Dummy
+	dsi_generic_write_seq(dsi, HW_NT51021_VND_DCH, 0xfc); // GCH DC improves high temperature interlaced display
+	dsi_generic_write_seq(dsi, HW_NT51021_VND_TERMRESIST, 0x00); // matching terminal resistance 100 ohms
+	dsi_generic_write_seq(dsi, HW_NT51021_VND_HSYNC, 0x10); // H-sync unlick OTP
+	dsi_generic_write_seq(dsi, HW_NT51021_VND_A9, 0x20); // ajust the hold time H-sync high level
+	dsi_generic_write_seq(dsi, HW_NT51021_VND_INDEX0, 0xaa); // command page 1
+	dsi_generic_write_seq(dsi, HW_NT51021_VND_INDEX1, 0x11); // command page 1
+        dsi_generic_write_seq(dsi, HW_NT51021_VND_A9, 0x4b); // IC MIPI Rx drive current capability gear 85%
+        dsi_generic_write_seq(dsi, HW_NT51021_VND_TESTMODE1, 0x04); // test mode 1
+        dsi_generic_write_seq(dsi, HW_NT51021_VND_TESTMODE2, 0x08); // test mode 2
+        dsi_generic_write_seq(dsi, HW_NT51021_VND_TESTMODE3, 0x10); // test mode 3
+	dsi_generic_write_seq(dsi, HW_NT51021_VND_MIPI, 0x00); //exit MIPI Command
+
+	/*dsi_dcs_write_seq(dsi, HW_NT51021_VND_INDEX0, 0x00); //hw boe
+	dsi_dcs_write_seq(dsi, HW_NT51021_VND_INDEX1, 0x00);
 	dsi_dcs_write_seq(dsi, 0x8c, 0x80);
 	dsi_dcs_write_seq(dsi, 0xcd, 0x6c);
 	dsi_dcs_write_seq(dsi, 0xc8, 0xfc);
 	dsi_dcs_write_seq(dsi, HW_NT51021_SET_DISPLAY_BRIGHTNESS, 0x00);
 	dsi_dcs_write_seq(dsi, 0x97, 0x00);
-	dsi_dcs_write_seq(dsi, HW_NT51021_INDEX0, 0xbb);
-	dsi_dcs_write_seq(dsi, HW_NT51021_INDEX1, 0x22);
+	dsi_dcs_write_seq(dsi, HW_NT51021_VND_INDEX0, 0xbb);
+	dsi_dcs_write_seq(dsi, HW_NT51021_VND_INDEX1, 0x22);
 	dsi_dcs_write_seq(dsi, 0x96, 0x00);
 	dsi_dcs_write_seq(dsi, HW_NT51021_CABC_MODE, 0xc0);
 	dsi_dcs_write_seq(dsi, 0x91, 0xa0);
@@ -130,14 +178,14 @@ static int hw_nt51021_init(struct hw_nt51021 *ctx)
 	dsi_dcs_write_seq(dsi, 0xb4, 0x1c);
 	dsi_dcs_write_seq(dsi, 0xb5, 0x38);
 	dsi_dcs_write_seq(dsi, 0xb6, 0x30);
-	dsi_dcs_write_seq(dsi, HW_NT51021_INDEX0, 0xaa);
-	dsi_dcs_write_seq(dsi, HW_NT51021_INDEX1, 0x11);
+	dsi_dcs_write_seq(dsi, HW_NT51021_VND_INDEX0, 0xaa);
+	dsi_dcs_write_seq(dsi, HW_NT51021_VND_INDEX1, 0x11);
 	dsi_dcs_write_seq(dsi, HW_NT51021_VND_A9, 0x4b);
 	dsi_dcs_write_seq(dsi, 0x85, 0x04);
 	dsi_dcs_write_seq(dsi, 0x86, 0x08);
 	dsi_dcs_write_seq(dsi, 0x9c, 0x10);
-	dsi_dcs_write_seq(dsi, HW_NT51021_INDEX0, 0x00);
-	dsi_dcs_write_seq(dsi, HW_NT51021_INDEX1, 0x00);
+	dsi_dcs_write_seq(dsi, HW_NT51021_VND_INDEX0, 0x00);
+	dsi_dcs_write_seq(dsi, HW_NT51021_VND_INDEX1, 0x00);*/
 
 	/*ret = mipi_dsi_dcs_set_tear_on(dsi, MIPI_DSI_DCS_TEAR_MODE_VBLANK);
 	if (ret < 0) {
@@ -160,7 +208,7 @@ static int hw_nt51021_on(struct hw_nt51021 *ctx)
 	struct device *dev = &dsi->dev;
 	int ret;
 
-	dsi->mode_flags &= ~MIPI_DSI_MODE_LPM; // HS_Mode
+	//dsi->mode_flags &= ~MIPI_DSI_MODE_LPM; // HS_Mode
 
 	ret = mipi_dsi_dcs_set_display_on(dsi);
 	if (ret < 0) {
@@ -177,7 +225,7 @@ static int hw_nt51021_off(struct hw_nt51021 *ctx)
 	struct device *dev = &dsi->dev;
 	int ret;
 
-	dsi->mode_flags &= ~MIPI_DSI_MODE_LPM; // HS_Mode
+	//dsi->mode_flags &= ~MIPI_DSI_MODE_LPM; // HS_Mode
 
 	ret = mipi_dsi_dcs_set_display_off(dsi);
 	if (ret < 0) {
@@ -186,8 +234,8 @@ static int hw_nt51021_off(struct hw_nt51021 *ctx)
 	}
 	msleep(50);
 
-	dsi_dcs_write_seq(dsi, 0x10, 0x00);
-	msleep(100);
+	/*dsi_dcs_write_seq(dsi, 0x10, 0x00);
+	msleep(100);*/
 
 	ret = mipi_dsi_dcs_enter_sleep_mode(dsi);
 	if (ret < 0) {
@@ -201,14 +249,14 @@ static int hw_nt51021_off(struct hw_nt51021 *ctx)
 	return 0;
 }
 
-static int hw_nt51021_cabc_off(struct hw_nt51021 *ctx)
+/*static int hw_nt51021_cabc_off(struct hw_nt51021 *ctx)
 {
 	struct mipi_dsi_device *dsi = ctx->dsi;
 
-    static char cabc_still_dimming_on[2] = {HW_NT51021_CABC_STILL_DIMMING, 0x60};
-    static char cabc_mode_off[2] = {HW_NT51021_CABC_MODE, 0xc0};
-    static char chang_page2_index0[2] = {HW_NT51021_INDEX0, 0xBB};
-    static char chang_page2_index1[2] = {HW_NT51021_INDEX1, 0x22};
+    //static char cabc_still_dimming_on[2] = {HW_NT51021_CABC_STILL_DIMMING, 0x60};
+    u8 cabc_mode_off[2] = {HW_NT51021_CABC_MODE, 0xc0};
+    u8 chang_page2_index0[2] = {HW_NT51021_VND_INDEX0, 0xBB};
+    u8 chang_page2_index1[2] = {HW_NT51021_VND_INDEX1, 0x22};
 	int ret;
 
 	ret = mipi_dsi_dcs_write_buffer(dsi, chang_page2_index0,
@@ -231,7 +279,7 @@ static int hw_nt51021_cabc_off(struct hw_nt51021 *ctx)
 	if (ret < 0)
 		return ret;
 	return 0;
-}
+}*/
 
 static int hw_nt51021_prepare(struct drm_panel *panel)
 {
@@ -249,17 +297,17 @@ static int hw_nt51021_prepare(struct drm_panel *panel)
 	}
     mdelay(5);
 
-	gpiod_set_value_cansleep(ctx->disp_power_backlight, 1);
-	gpiod_set_value_cansleep(ctx->disp_power_panel, 1);
+	gpiod_set_value_cansleep(ctx->vci_gpio, 1);
+	gpiod_set_value_cansleep(ctx->iovcc_gpio, 1);
 	msleep(500);
 
 	hw_nt51021_reset(ctx);
 
 	ret = hw_nt51021_init(ctx);
 
-	ret = hw_nt51021_cabc_off(ctx);
+	/*ret = hw_nt51021_cabc_off(ctx); //pele?
 	if (ret)
-		return ret;
+		return ret;*/
 
 	ret = hw_nt51021_on(ctx);
 	if (ret < 0) {
@@ -291,7 +339,7 @@ static int hw_nt51021_enable(struct drm_panel *panel)
 	}
 	msleep(20);
 
-	gpiod_set_value(ctx->disp_en_gpio_vled, 1);
+	gpiod_set_value(ctx->backlight_gpio, 1);
 	msleep(200);
 
 	ctx->enabled = true;
@@ -313,7 +361,7 @@ static int hw_nt51021_disable(struct drm_panel *panel)
 	if (ret < 0)
 		dev_err(dev, "Failed to un-initialize panel: %d\n", ret);
 
-	gpiod_set_value(ctx->disp_en_gpio_vled, 0);
+	gpiod_set_value(ctx->backlight_gpio, 0);
 	msleep(200);
 
 	ctx->enabled = false;
@@ -381,16 +429,17 @@ static const struct drm_panel_funcs hw_nt51021_panel_funcs = {
 	.get_modes = hw_nt51021_get_modes,
 };
 
-static int hw_nt51021_bkl_en(struct hw_nt51021 *ctx)
+static int hw_nt51021_bkl_cmd(struct hw_nt51021 *ctx)
 {
 	struct mipi_dsi_device *dsi = ctx->dsi;
+	struct device *dev = &dsi->dev;
 
-    static char brightness[2] = {HW_NT51021_SET_DISPLAY_BRIGHTNESS, 0x00};
-    static char chang_page0_index0[2] = {HW_NT51021_INDEX0, 0x00};
-    static char chang_page0_index1[2] = {HW_NT51021_INDEX1, 0x00};
-	int ret;
+    u8 pwm_led[2] = {HW_NT51021_SET_DISPLAY_BRIGHTNESS, 0x00};
+    u8 chang_page0_index0[2] = {HW_NT51021_VND_INDEX0, 0x00};
+    u8 chang_page0_index1[2] = {HW_NT51021_VND_INDEX1, 0x00};
+    int ret;
 
-	dsi->mode_flags &= ~MIPI_DSI_MODE_LPM; // HS_Mode
+	//dsi->mode_flags &= ~MIPI_DSI_MODE_LPM; // HS_Mode
 
 	ret = mipi_dsi_dcs_write_buffer(dsi, chang_page0_index0,
 					ARRAY_SIZE(chang_page0_index0));
@@ -402,26 +451,28 @@ static int hw_nt51021_bkl_en(struct hw_nt51021 *ctx)
 	if (ret < 0)
 		return ret;
 
-	ret = mipi_dsi_dcs_write_buffer(dsi, brightness,
-					ARRAY_SIZE(brightness));
+	ret = mipi_dsi_dcs_write_buffer(dsi, pwm_led,
+					ARRAY_SIZE(pwm_led));
 	if (ret < 0)
 		return ret;
 
 	return 0;
 }
 
-static int hw_mipi_dsi_dcs_set_display_brightness(struct mipi_dsi_device *dsi,
+static int hw_mipi_dsi_dcs_set_level(struct mipi_dsi_device *dsi,
 					u16 brightness)
 {
-	//struct device *dev = &dsi->dev;
-	struct boe_nt51021_10_1200p *ctx;
+	/*struct hw_nt51021 *ctx;
+	struct device *dev = &dsi->dev;*/
 	u8 payload[2] = { brightness & 0xff, brightness >> 8 };
 	ssize_t err;
 
-    //hw_nt51021_bkl(ctx);
+	//hw_nt51021_bkl_en(&ctx->dsi);
 
 	err = mipi_dsi_dcs_write(dsi, HW_NT51021_SET_DISPLAY_BRIGHTNESS,
 				 payload, sizeof(payload));
+      /*err = mipi_dsi_dcs_write(dsi, hw_nt51021_bkl_en,
+				 payload, sizeof(payload));*/
 	if (err < 0)
 		return err;
 
@@ -433,8 +484,8 @@ static int hw_nt51021_bl_update_status(struct backlight_device *bl)
 	struct mipi_dsi_device *dsi = bl_get_data(bl);
 	struct hw_nt51021 *ctx = mipi_dsi_get_drvdata(dsi);
 	struct device *dev = &ctx->dsi->dev;
-	u16 brightness = backlight_get_brightness(bl);
-	//u8 brightness = bl->props.brightness;
+	//u16 level = backlight_get_brightness(bl);
+	u16 brightness = bl->props.brightness;
 	int ret;
 
     //gpiod_set_value_cansleep(ctx->blen_gpio, !!brightness);
@@ -445,14 +496,18 @@ static int hw_nt51021_bl_update_status(struct backlight_device *bl)
 	if (ret)
 		return ret;*/
 
-	ret = hw_nt51021_bkl_en(ctx);
+	ret = hw_nt51021_bkl_cmd(ctx);
 	if (ret)
 		return ret;
-    
-	dev_dbg(dev, "set brightness %d\n", brightness);
+		
+    	ret = hw_mipi_dsi_dcs_set_level(dsi, brightness);
+	if (ret < 0)
+		return ret;
+
+	/*dev_dbg(dev, "set brightness %d\n", brightness);
 	ret = mipi_dsi_dcs_write(dsi, HW_NT51021_SET_DISPLAY_BRIGHTNESS,
 				 brightness,
-				 sizeof(brightness));
+				 sizeof(brightness));*/
 	if (ret < 0)
 		return ret;
 
@@ -461,14 +516,14 @@ static int hw_nt51021_bl_update_status(struct backlight_device *bl)
 	return 0;
 }
 
-static int hw_nt51021_bl_get_intensity(struct backlight_device *bl)
+/*static int hw_nt51021_bl_get_intensity(struct backlight_device *bl)
 {
 	return backlight_get_brightness(bl);
-}
+}*/
 
 static const struct backlight_ops hw_nt51021_bl_ops = {
 	.update_status = hw_nt51021_bl_update_status,
-	.get_brightness = hw_nt51021_bl_get_intensity,
+	//.get_brightness = hw_nt51021_bl_get_intensity,
 };
 
 static struct backlight_device *
@@ -495,6 +550,7 @@ static int hw_nt51021_probe(struct mipi_dsi_device *dsi)
 	if (!ctx)
 		return -ENOMEM;
 
+	//ctx->supplies[0].supply = "vddio";
 	ctx->supplies[0].supply = "vsp";
 	ctx->supplies[1].supply = "vsn";
 	ret = devm_regulator_bulk_get(dev, ARRAY_SIZE(ctx->supplies),
@@ -502,19 +558,19 @@ static int hw_nt51021_probe(struct mipi_dsi_device *dsi)
 	if (ret < 0)
 		return dev_err_probe(dev, ret, "Failed to get regulators\n");
 
-	ctx->disp_power_panel = devm_gpiod_get(dev, "panel", GPIOD_OUT_HIGH);
-	if (IS_ERR(ctx->disp_power_panel))
-		return dev_err_probe(dev, PTR_ERR(ctx->disp_power_panel),
+	ctx->iovcc_gpio = devm_gpiod_get(dev, "panel", GPIOD_OUT_HIGH);
+	if (IS_ERR(ctx->iovcc_gpio))
+		return dev_err_probe(dev, PTR_ERR(ctx->iovcc_gpio),
 				     "Failed to get panel-gpios\n");
 
-	ctx->disp_en_gpio_vled = devm_gpiod_get(dev, "enable", GPIOD_OUT_HIGH);
-	if (IS_ERR(ctx->disp_en_gpio_vled))
-		return dev_err_probe(dev, PTR_ERR(ctx->disp_en_gpio_vled),
+	ctx->backlight_gpio = devm_gpiod_get(dev, "vled", GPIOD_OUT_HIGH);
+	if (IS_ERR(ctx->backlight_gpio))
+		return dev_err_probe(dev, PTR_ERR(ctx->backlight_gpio),
 				     "Failed to get enable-gpios\n");
 
-	ctx->disp_power_backlight = devm_gpiod_get(dev, "backlight", GPIOD_OUT_LOW);
-	if (IS_ERR(ctx->disp_power_backlight))
-		return dev_err_probe(dev, PTR_ERR(ctx->disp_power_backlight),
+	ctx->vci_gpio = devm_gpiod_get(dev, "backlight", GPIOD_OUT_HIGH);
+	if (IS_ERR(ctx->vci_gpio))
+		return dev_err_probe(dev, PTR_ERR(ctx->vci_gpio),
 				     "Failed to get backlight-gpios\n");
 
 	ctx->reset_gpio = devm_gpiod_get(dev, "reset", GPIOD_OUT_HIGH);
@@ -529,7 +585,7 @@ static int hw_nt51021_probe(struct mipi_dsi_device *dsi)
 	dsi->format = MIPI_DSI_FMT_RGB888;
 	dsi->mode_flags = MIPI_DSI_MODE_VIDEO | MIPI_DSI_MODE_VIDEO_BURST |
 			  MIPI_DSI_MODE_VIDEO_HSE | MIPI_DSI_MODE_NO_EOT_PACKET |
-			  MIPI_DSI_CLOCK_NON_CONTINUOUS;
+			  MIPI_DSI_CLOCK_NON_CONTINUOUS | MIPI_DSI_MODE_LPM;
 
 	drm_panel_init(&ctx->panel, dev, &hw_nt51021_panel_funcs,
 		       DRM_MODE_CONNECTOR_DSI);

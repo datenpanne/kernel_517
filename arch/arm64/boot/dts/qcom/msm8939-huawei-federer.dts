@@ -301,14 +301,10 @@
 };
 
 &blsp_spi1 { // for speaker
-    gpio-mosi = <&msmgpio 0 0>;
-    gpio-sck = <&msmgpio 3 0>;
-    gpio-miso = <&msmgpio 1 0>;
-    cs-gpios = <&msmgpio 2 0>;
-};
-
-&blsp_i2c1 {
-	status = "okay";
+	mosi-gpios = <&msmgpio 0 GPIO_ACTIVE_HIGH>;
+	miso-gpios = <&msmgpio 1 GPIO_ACTIVE_HIGH>;
+	cs-gpios = <&msmgpio 2 GPIO_ACTIVE_HIGH>;
+	sck-gpios = <&msmgpio 3 GPIO_ACTIVE_HIGH>;
 };
 
 &blsp_i2c2 {
@@ -468,7 +464,7 @@
 
 &dsi0 {
 	status = "okay";
-	vdda-supply = <&pm8916_l17>;
+	vdd-supply = <&pm8916_l17>;
 	vddio-supply = <&pm8916_l6>;
 	/*pinctrl-names = "default", "sleep";
 	pinctrl-0 = <&mdss_default>;
@@ -488,15 +484,16 @@
 		//compatible = "boe,nt51021-10-1200p";
 		reg = <0>;
 
-        vsp-supply = <&reg_lcd_vsp>;
-        vsn-supply = <&reg_lcd_vsn>;
-        //blen-supply = <&reg_lcd_blen>;
-
-		enable-gpios = <&msmgpio 97 GPIO_ACTIVE_HIGH>;
-		panel-gpios = <&msmgpio 32 GPIO_ACTIVE_HIGH>;
+		//vddio-supply = <&pm8916_l6>;
+		vsp-supply = <&reg_lcd_vsp>;
+		vsn-supply = <&reg_lcd_vsn>;
+		//blen-supply = <&reg_lcd_blen>;
 
 		reset-gpios = <&msmgpio 25 GPIO_ACTIVE_LOW>;
+		
 		backlight-gpios = <&msmgpio 109 GPIO_ACTIVE_HIGH>;
+		panel-gpios = <&msmgpio 32 GPIO_ACTIVE_HIGH>;
+		vled-gpios = <&msmgpio 97 GPIO_ACTIVE_HIGH>;
 
 		ports {
 			#address-cells = <1>;
