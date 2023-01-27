@@ -180,6 +180,26 @@
 		};
 	};
 
+	lcd_pp18: regulator-pp18 {
+		compatible = "regulator-fixed";
+		regulator-name = "lcd_pp18";
+		vin-supply = <&pm8916_l6>;
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <1800000>;
+		regulator-always-on;
+		regulator-boot-on;
+	};
+
+	lcd_pp3300: regulator-pp3300 {
+		compatible = "regulator-fixed";
+		regulator-name = "lcd_pp3300";
+		vin-supply = <&pm8916_l17>;
+		regulator-min-microvolt = <3300000>;
+		regulator-max-microvolt = <3300000>;
+		regulator-always-on;
+		regulator-boot-on;
+	};
+
 	/*reg_lcd_vcc: vcc {
 		compatible = "regulator-fixed";
 		regulator-name = "vcc";
@@ -225,19 +245,29 @@
 	reg_lcd_vsp: regulator-lcd-vsp {
 		compatible = "regulator-fixed";
 		regulator-name = "vsp";
+		vin-supply = <&pm8916_l6>;
 		regulator-min-microvolt = <5400000>;
 		regulator-max-microvolt = <5400000>;
-		regulator-always-on;
-		regulator-boot-on;
+		//regulator-always-on;
+		//regulator-boot-on; // allows fb console to show up briefly at boot without always-on
+		gpio = <&msmgpio 97 GPIO_ACTIVE_HIGH>;
+		enable-active-high;
+		pinctrl-names = "default";
+		pinctrl-0 = <&lcd_vsp_default>;
 	};
 
 	reg_lcd_vsn: regulator-lcd-vsn {
 		compatible = "regulator-fixed";
 		regulator-name = "vsn";
+		vin-supply = <&pm8916_l6>;
 		regulator-min-microvolt = <5400000>;
 		regulator-max-microvolt = <5400000>;
-		regulator-always-on;
-		regulator-boot-on;
+		//regulator-always-on;
+		//regulator-boot-on; // allows fb console to show up briefly at boot without always-on
+		gpio = <&msmgpio 32 GPIO_ACTIVE_HIGH>;
+		enable-active-high;
+		pinctrl-names = "default";
+		pinctrl-0 = <&lcd_vsn_default>;
 	};
 
 	/*reg_vcc5v0: vcc5v0 {
@@ -286,6 +316,22 @@
 		pinctrl-names = "default";
 		pinctrl-0 = <&headphones_switch_default>;
 		sound-name-prefix = "Headphones Switch";
+	};
+
+	vreg_bl_vddio: lcd-backlight-vddio {
+		compatible = "regulator-fixed";
+		regulator-name = "vreg_bl_vddio";
+		regulator-min-microvolt = <3300000>;
+		regulator-max-microvolt = <3300000>;
+
+		gpio = <&msmgpio 109 0>;
+		enable-active-high;
+
+		vin-supply = <&pm8916_s3>;
+		startup-delay-us = <70000>;
+
+		pinctrl-names = "default";
+		pinctrl-0 = <&lcd_backlight_en_pin_a>;
 	};
 
 	usb_id: usb-id {
@@ -452,6 +498,13 @@
 		interrupts = <13 0x2008>;
 		reset-gpios = <&msmgpio 12 0x0>;
 	};
+
+    backlight: backlight@2c { /* ti backlight ic*/
+		status = "ok";
+		compatible = "ti,lp8556";
+		reg = <0x2c>;
+		power-supply = <&vreg_bl_vddio>;
+	  };
 };
 
 &blsp1_uart2 {
@@ -464,6 +517,9 @@
 
 &dsi0 {
 	status = "okay";
+	#address-cells = <1>;
+	#size-cells = <0>;
+	
 	vdd-supply = <&pm8916_l17>;
 	vddio-supply = <&pm8916_l6>;
 	/*pinctrl-names = "default", "sleep";
@@ -485,15 +541,20 @@
 		reg = <0>;
 
 		//vddio-supply = <&pm8916_l6>;
-		vsp-supply = <&reg_lcd_vsp>;
-		vsn-supply = <&reg_lcd_vsn>;
+		volregP-supply = <&reg_lcd_vsp>;
+		volregN-supply = <&reg_lcd_vsn>;
 		//blen-supply = <&reg_lcd_blen>;
-
-		reset-gpios = <&msmgpio 25 GPIO_ACTIVE_LOW>;
+		pp3300-supply = <&pm8916_l16>;
+		pp1800-supply = <&pm8916_l6>;
 		
+		reset-gpios = <&msmgpio 25 GPIO_ACTIVE_HIGH>;
+
+		/* HW Boe
 		backlight-gpios = <&msmgpio 109 GPIO_ACTIVE_HIGH>;
 		panel-gpios = <&msmgpio 32 GPIO_ACTIVE_HIGH>;
-		vled-gpios = <&msmgpio 97 GPIO_ACTIVE_HIGH>;
+		vled-gpios = <&msmgpio 97 GPIO_ACTIVE_HIGH>;*/
+
+		backlight = <&backlight>;
 
 		ports {
 			#address-cells = <1>;
@@ -828,7 +889,7 @@
 		bias-disable;
 	};
 
-	lcd_vcc_default: lcd-vcc-default {
+	/*lcd_vcc_default: lcd-vcc-default {
 		pins = "gpio97";
 		function = "gpio";
 
@@ -850,7 +911,7 @@
 
 		drive-strength = <2>;
 		output-low;
-	};
+	};*/
 
 	mdss {
 		mdss_default: mdss-default {
@@ -868,6 +929,31 @@
 			bias-pull-down;
 		};
 	};
+
+	lcd_vsp_default: lcd-vsp-default {
+		pins = "gpio97";
+		function = "gpio";
+
+		drive-strength = <2>;
+		bias-pull-up;
+		output-high;
+	};
+
+	lcd_vsn_default: lcd-vsn-default {
+		pins = "gpio32";
+		function = "gpio";
+
+		drive-strength = <2>;
+		bias-pull-up;
+		output-high;
+	};
+
+	lcd_backlight_en_pin_a: lcd-backlight-vddio {
+		pins = "gpio109";
+		drive-strength = <10>;
+		output-low;
+		bias-disable;
+		};
 
 	/*bq {
 		bq_irq_default: bq-irq-default {
