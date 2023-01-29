@@ -308,7 +308,7 @@
 
 	};
 
-	headphones_switch: audio-switch {
+	/*headphones_switch: audio-switch {
 		compatible = "simple-audio-amplifier";
 		enable-gpios = <&msmgpio 0 GPIO_ACTIVE_HIGH>;
 		//VCC-supply = <&reg_spk_ext_pa_boost>;
@@ -316,7 +316,7 @@
 		pinctrl-names = "default";
 		pinctrl-0 = <&headphones_switch_default>;
 		sound-name-prefix = "Headphones Switch";
-	};
+	};*/
 
 	/*vreg_bl_vddio: lcd-backlight-vddio {
 		compatible = "regulator-fixed";
@@ -346,12 +346,12 @@
 	status = "okay";
 };
 
-&blsp_spi1 { // for speaker
+/*&blsp_spi1 { // for speaker
 	mosi-gpios = <&msmgpio 0 GPIO_ACTIVE_HIGH>;
 	miso-gpios = <&msmgpio 1 GPIO_ACTIVE_HIGH>;
 	cs-gpios = <&msmgpio 2 GPIO_ACTIVE_HIGH>;
 	sck-gpios = <&msmgpio 3 GPIO_ACTIVE_HIGH>;
-};
+};*/
 
 &blsp_i2c1 {
 	status = "okay";
