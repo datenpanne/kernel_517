@@ -355,6 +355,8 @@
 
 &blsp_i2c1 {
 	status = "okay";
+	clock-frequency = <400000>;
+	qcom,src-freq = <19200000>;
 	pinctrl-names = "default", "sleep";
 	pinctrl-0 = <&i2c1_default>;
 	pinctrl-1 = <&i2c1_sleep>;
