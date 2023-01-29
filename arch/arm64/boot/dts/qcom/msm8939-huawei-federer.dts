@@ -679,7 +679,7 @@
 		"AMIC1", "MIC BIAS External1",
 		"AMIC2", "MIC BIAS External2",
 		"AMIC3", "MIC BIAS External1";
-	aux-devs = <&speaker_amp>, <&headphones_switch>;
+	aux-devs = <&speaker_amp>;//, <&headphones_switch>;
 
 	dai-link-primary {
 		link-name = "Primary MI2S";
