@@ -318,7 +318,7 @@
 		sound-name-prefix = "Headphones Switch";
 	};
 
-	vreg_bl_vddio: lcd-backlight-vddio {
+	/*vreg_bl_vddio: lcd-backlight-vddio {
 		compatible = "regulator-fixed";
 		regulator-name = "vreg_bl_vddio";
 		regulator-min-microvolt = <3300000>;
@@ -332,7 +332,7 @@
 
 		pinctrl-names = "default";
 		pinctrl-0 = <&lcd_backlight_en_pin_a>;
-	};
+	};*/
 
 	usb_id: usb-id {
 		compatible = "linux,extcon-usb-gpio";
@@ -352,6 +352,20 @@
 	cs-gpios = <&msmgpio 2 GPIO_ACTIVE_HIGH>;
 	sck-gpios = <&msmgpio 3 GPIO_ACTIVE_HIGH>;
 };
+
+&blsp_i2c1 {
+	status = "okay";
+	pinctrl-names = "default", "sleep";
+	pinctrl-0 = <&i2c1_default>;
+	pinctrl-1 = <&i2c1_sleep>;
+
+	backlight: backlight@2c { /* ti backlight ic*/
+		status = "ok";
+		compatible = "ti,lp8556";
+		reg = <0x2c>;
+		power-supply = <&pm8916_l6>;
+	  };
+};	
 
 &blsp_i2c2 {
 	status = "okay";
@@ -472,23 +486,13 @@
 		onnn,discharge-enable;
 		onnn,restore-reg;
 	};
-
-	fan53555: fan53555-regulator@60 {
-		status = "disabled";
-		compatible = "fcs,fan53555";
-		reg = <0x60>;
-		pinctrl-names = "default";
-		pinctrl-0 = <&ext_buck_vsel>;
-		regulator-min-microvolt =  <1050000>;
-		regulator-max-microvolt = <1350000>;
-		regulator-ramp-delay = <1250>;
-		regulator-always-on;
-		vsel-gpios = <&msmgpio 111 GPIO_ACTIVE_LOW>;
-	};
 };
 
 &blsp_i2c5 {
 	status = "okay";
+	/*pinctrl-names = "default", "sleep";
+	pinctrl-0 = <&i2c5_default>;
+	pinctrl-1 = <&i2c5_sleep>;*/
 
 	touchscreen@1a {
 		compatible = "cypress,cyttsp5";
@@ -499,12 +503,12 @@
 		reset-gpios = <&msmgpio 12 0x0>;
 	};
 
-    backlight: backlight@2c { /* ti backlight ic*/
+	/*backlight: backlight@2c {
 		status = "ok";
 		compatible = "ti,lp8556";
 		reg = <0x2c>;
-		power-supply = <&vreg_bl_vddio>;
-	  };
+		power-supply = <&pm8916_l6>;
+	  };*/
 };
 
 &blsp1_uart2 {
@@ -833,6 +837,10 @@
 };
 
 &msmgpio {
+	i2c1_sleep: i2c1-sleep {
+		output-high;
+	};
+
 	accel_irq_default: accel-irq-default {
 		pins = "gpio115";
 		function = "gpio";
