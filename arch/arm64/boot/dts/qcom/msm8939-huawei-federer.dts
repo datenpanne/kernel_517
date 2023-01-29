@@ -364,7 +364,63 @@
 		compatible = "ti,lp8556";
 		reg = <0x2c>;
 		power-supply = <&pm8916_l6>;
-	  };
+
+		bl-name = "backlight";
+		dev-ctrl = /bits/ 8 <0x85>;
+		init-brt = /bits/ 8 <0x06>;
+		rom_a0h {
+				rom-addr = /bits/ 8 <0xa0>;
+				rom-val = /bits/ 8 <0xff>;
+		};
+		rom_a1h {
+				rom-addr = /bits/ 8 <0xa1>;
+				rom-val = /bits/ 8 <0xcf>;
+		};
+		rom_a2h {
+				rom-addr = /bits/ 8 <0xa2>;
+				rom-val = /bits/ 8 <0x2b>;
+		};
+		rom_a3h {
+				rom-addr = /bits/ 8 <0xa3>;
+				rom-val = /bits/ 8 <0x32>;
+		};
+		rom_a4h {
+				rom-addr = /bits/ 8 <0xa4>;
+				rom-val = /bits/ 8 <0x72>;
+		};
+		rom_a5h {
+				rom-addr = /bits/ 8 <0xa5>;
+				rom-val = /bits/ 8 <0x20>;
+		};
+		rom_a6h {
+				rom-addr = /bits/ 8 <0xa6>;
+				rom-val = /bits/ 8 <0x80>;
+		};
+		rom_a7h {
+				rom-addr = /bits/ 8 <0xa7>;
+				rom-val = /bits/ 8 <0xf7>;
+		};
+		rom_a9h {
+				rom-addr = /bits/ 8 <0xa9>;
+				rom-val = /bits/ 8 <0x80>;
+		};
+		rom_aah {
+				rom-addr = /bits/ 8 <0xaa>;
+				rom-val = /bits/ 8 <0x0f>;
+		};
+		rom_aeh {
+				rom-addr = /bits/ 8 <0xae>;
+				rom-val = /bits/ 8 <0x0e>;
+		};
+		rom_9eh {
+				rom-addr = /bits/ 8 <0x9e>;
+				rom-val = /bits/ 8 <0x22>;
+		};
+		rom_16h {
+				rom-addr = /bits/ 8 <0x16>;
+				rom-val = /bits/ 8 <0x0f>;
+		};
+	};
 };	
 
 &blsp_i2c2 {
@@ -980,7 +1036,7 @@
 		};
 	};*/
 
-	speaker_amp_default: speaker-amp-default {
+	/*speaker_amp_default: speaker-amp-default {
 		pins = "gpio3";
 		function = "gpio";
 
@@ -994,7 +1050,7 @@
 
 		drive-strength = <2>;
 		bias-disable;
-	};
+	};*/
 
 	usb_id_default: usb-id-default {
 		pins = "gpio117";
