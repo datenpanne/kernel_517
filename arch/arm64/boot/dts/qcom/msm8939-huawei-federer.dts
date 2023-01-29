@@ -283,7 +283,7 @@
 		pinctrl-0 = <&vcc5v0_en_default>;
 	};*/
 
-	spk_pa_boost: spk-ext-pa-boost {
+	/*spk_pa_boost: spk-ext-pa-boost {
 		compatible = "regulator-fixed";
 		regulator-name = "spk-pa-boost";
 		regulator-min-microvolt = <3300000>;
@@ -308,7 +308,7 @@
 
 	};
 
-	/*headphones_switch: audio-switch {
+	headphones_switch: audio-switch {
 		compatible = "simple-audio-amplifier";
 		enable-gpios = <&msmgpio 0 GPIO_ACTIVE_HIGH>;
 		//VCC-supply = <&reg_spk_ext_pa_boost>;
