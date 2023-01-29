@@ -318,13 +318,13 @@
 		sound-name-prefix = "Headphones Switch";
 	};*/
 
-	/*vreg_bl_vddio: lcd-backlight-vddio {
+	vreg_bl_vddio: lcd-backlight-vddio {
 		compatible = "regulator-fixed";
 		regulator-name = "vreg_bl_vddio";
 		regulator-min-microvolt = <3300000>;
 		regulator-max-microvolt = <3300000>;
 
-		gpio = <&msmgpio 109 0>;
+		gpios = <&msmgpio 109 0>;
 		enable-active-high;
 
 		vin-supply = <&pm8916_s3>;
@@ -332,7 +332,7 @@
 
 		pinctrl-names = "default";
 		pinctrl-0 = <&lcd_backlight_en_pin_a>;
-	};*/
+	};
 
 	usb_id: usb-id {
 		compatible = "linux,extcon-usb-gpio";
@@ -363,7 +363,8 @@
 		status = "ok";
 		compatible = "ti,lp8556";
 		reg = <0x2c>;
-		power-supply = <&pm8916_l6>;
+		//power-supply = <&pm8916_l6>;
+		power-supply = <&vreg_bl_vddio>;
 
 		bl-name = "backlight";
 		dev-ctrl = /bits/ 8 <0x85>;
@@ -1017,7 +1018,7 @@
 		drive-strength = <10>;
 		output-low;
 		bias-disable;
-		};
+	};
 
 	/*bq {
 		bq_irq_default: bq-irq-default {
