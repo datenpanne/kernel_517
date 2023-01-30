@@ -45,10 +45,12 @@ struct boe_panel {
 	const struct panel_desc *desc;
 
 	enum drm_panel_orientation orientation;
-	struct regulator *pp3300;
-	struct regulator *pp1800;
+	struct regulator *lcdanalog_vcc;
+	struct regulator *lcdio_vcc;
 	struct regulator *volregN;
 	struct regulator *volregP;
+	struct regulator *Biasvol;
+	struct regulator *backlight;
 	struct gpio_desc *reset_gpio;
 
 	bool prepared;
@@ -180,16 +182,20 @@ static int boe_panel_unprepare(struct drm_panel *panel)
 		usleep_range(5000, 7000);
 		gpiod_set_value(boe->reset_gpio, 0);
 		usleep_range(5000, 7000);
-		regulator_disable(boe->pp1800);
-		regulator_disable(boe->pp3300);
+		regulator_disable(boe->lcdio_vcc);
+		regulator_disable(boe->lcdanalog_vcc);
+                regulator_disable(boe->Biasvol);
+                regulator_disable(boe->backlight);
 	} else {
 		gpiod_set_value(boe->reset_gpio, 0);
 		usleep_range(1000, 2000);
 		regulator_disable(boe->volregN);
 		regulator_disable(boe->volregP);
 		usleep_range(5000, 7000);
-		regulator_disable(boe->pp1800);
-		regulator_disable(boe->pp3300);
+		regulator_disable(boe->lcdio_vcc);
+		regulator_disable(boe->lcdanalog_vcc);
+                regulator_disable(boe->Biasvol);
+                regulator_disable(boe->backlight);
 	}
 
 	boe->prepared = false;
@@ -208,11 +214,15 @@ static int boe_panel_prepare(struct drm_panel *panel)
 	gpiod_set_value(boe->reset_gpio, 0);
 	usleep_range(1000, 1500);
 
-	ret = regulator_enable(boe->pp3300);
+	ret = regulator_enable(boe->lcdanalog_vcc);
 	if (ret < 0)
 		return ret;
 
-	ret = regulator_enable(boe->pp1800);
+	ret = regulator_enable(boe->lcdio_vcc);
+	if (ret < 0)
+		return ret;
+
+	ret = regulator_enable(boe->Biasvol);
 	if (ret < 0)
 		return ret;
 
@@ -226,6 +236,10 @@ static int boe_panel_prepare(struct drm_panel *panel)
 		goto poweroffvolregP;
 
 	usleep_range(10000, 11000);
+
+	ret = regulator_enable(boe->backlight);
+	if (ret < 0)
+		return ret;
 
 	gpiod_set_value(boe->reset_gpio, 1);
 	usleep_range(1000, 2000);
@@ -250,7 +264,8 @@ poweroffvolregP:
 	regulator_disable(boe->volregP);
 poweroff1v8:
 	usleep_range(5000, 7000);
-	regulator_disable(boe->pp1800);
+	regulator_disable(boe->lcdio_vcc);
+	regulator_disable(boe->Biasvol);
 	gpiod_set_value(boe->reset_gpio, 0);
 
 	return ret;
@@ -337,15 +352,23 @@ static int boe_panel_add(struct boe_panel *boe)
 	if (IS_ERR(boe->volregN))
 		return PTR_ERR(boe->volregN);
 
-	boe->pp3300 = devm_regulator_get(dev, "pp3300");
-	if (IS_ERR(boe->pp3300))
-		return PTR_ERR(boe->pp3300);
+	boe->lcdanalog_vcc = devm_regulator_get(dev, "lcdanalogvcc");
+	if (IS_ERR(boe->lcdanalog_vcc))
+		return PTR_ERR(boe->lcdanalog_vcc);
 
-	boe->pp1800 = devm_regulator_get(dev, "pp1800");
-	if (IS_ERR(boe->pp1800))
-		return PTR_ERR(boe->pp1800);
+	boe->lcdio_vcc = devm_regulator_get(dev, "lcdiovcc");
+	if (IS_ERR(boe->lcdio_vcc))
+		return PTR_ERR(boe->lcdio_vcc);
 
-	boe->reset_gpio = devm_gpiod_get(dev, "reset", GPIOD_OUT_LOW);
+        boe->Biasvol = devm_regulator_get(dev, "Biasvol");
+	if (IS_ERR(boe->Biasvol))
+		return PTR_ERR(boe->Biasvol);
+
+	boe->backlight = devm_regulator_get(dev, "backlight");
+	if (IS_ERR(boe->backlight))
+		return PTR_ERR(boe->backlight);
+
+	boe->reset_gpio = devm_gpiod_get(dev, "enable", GPIOD_OUT_LOW);
 	if (IS_ERR(boe->reset_gpio)) {
 		dev_err(dev, "cannot get reset-gpios %ld\n",
 			PTR_ERR(boe->reset_gpio));

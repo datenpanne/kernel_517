@@ -108,7 +108,7 @@
 		charge-full-design-microamp-hours = <6500000>;
 
         precharge-current-microamp = <1300000>;
-        charge-term-current-microamp = <650000>;
+        charge-term-current-microamp = <260000>;
 
 		ocv-capacity-celsius = <25>;
 		ocv-capacity-table-0 = <4314000 100>, <4252000 95>, <4197000 90>,
@@ -180,12 +180,26 @@
 		};
 	};
 
-	lcd_pp18: regulator-pp18 {
+	lcd_backlight: gpio-regulator {
+		compatible = "regulator-gpio";
+		regulator-name = "lcd_backlight";
+		enable-active-high;
+		regulator-boot-on;
+		//delay 5000
+		enable-gpios = <&msmgpio 109 GPIO_ACTIVE_HIGH>;
+		//gpio = <&msmgpio 109 GPIO_ACTIVE_HIGH>;
+		startup-delay-us = <5000000>;
+		//pinctrl-names = "default";
+		//pinctrl-0 = <&lcd_vsp_default>;
+	};
+
+	vcc_lcdbias: regulator-lcdbias {
 		compatible = "regulator-fixed";
-		regulator-name = "lcd_pp18";
-		vin-supply = <&pm8916_l6>;
-		regulator-min-microvolt = <1800000>;
-		regulator-max-microvolt = <1800000>;
+		regulator-name = "vcc_lcdbias";
+		regulator-min-microvolt = <5400000>;
+		regulator-max-microvolt = <5400000>;
+		startup-delay-us = <400000>;
+		//delay 400
 		regulator-always-on;
 		regulator-boot-on;
 	};
@@ -244,27 +258,27 @@
 
 	reg_lcd_vsp: regulator-lcd-vsp {
 		compatible = "regulator-fixed";
-		regulator-name = "vsp";
-		vin-supply = <&pm8916_l6>;
+		regulator-name = "lcd_vsp";
 		regulator-min-microvolt = <5400000>;
 		regulator-max-microvolt = <5400000>;
-		//regulator-always-on;
+		regulator-always-on;
 		//regulator-boot-on; // allows fb console to show up briefly at boot without always-on
 		gpio = <&msmgpio 97 GPIO_ACTIVE_HIGH>;
 		enable-active-high;
+		startup-delay-us = <200000>; //delay 200
 		pinctrl-names = "default";
 		pinctrl-0 = <&lcd_vsp_default>;
 	};
 
 	reg_lcd_vsn: regulator-lcd-vsn {
 		compatible = "regulator-fixed";
-		regulator-name = "vsn";
-		vin-supply = <&pm8916_l6>;
+		regulator-name = "lcd_vsn";
 		regulator-min-microvolt = <5400000>;
 		regulator-max-microvolt = <5400000>;
-		//regulator-always-on;
+		regulator-always-on;
 		//regulator-boot-on; // allows fb console to show up briefly at boot without always-on
 		gpio = <&msmgpio 32 GPIO_ACTIVE_HIGH>;
+		startup-delay-us = <200000>; //delay 200
 		enable-active-high;
 		pinctrl-names = "default";
 		pinctrl-0 = <&lcd_vsn_default>;
@@ -318,7 +332,7 @@
 		sound-name-prefix = "Headphones Switch";
 	};*/
 
-	vreg_bl_vddio: lcd-backlight-vddio {
+	/*vreg_bl_vddio: lcd-backlight-vddio {
 		compatible = "regulator-fixed";
 		regulator-name = "vreg_bl_vddio";
 		regulator-min-microvolt = <3300000>;
@@ -332,7 +346,7 @@
 
 		pinctrl-names = "default";
 		pinctrl-0 = <&lcd_backlight_en_pin_a>;
-	};
+	};*/
 
 	usb_id: usb-id {
 		compatible = "linux,extcon-usb-gpio";
@@ -566,8 +580,8 @@
 		status = "ok";
 		compatible = "ti,lp8556";
 		reg = <0x2c>;
-		//power-supply = <&pm8916_l6>;
-		power-supply = <&vreg_bl_vddio>;
+		power-supply = <&pm8916_l6>;
+		//power-supply = <&vreg_bl_vddio>;
 
 		bl-name = "backlight";
 		dev-ctrl = /bits/ 8 <0x85>;
@@ -661,12 +675,14 @@
 		reg = <0>;
 
 		//vddio-supply = <&pm8916_l6>;
+		
+		lcdio-vcc-supply = <&pm8916_l6>;
+		lcdanalog-vcc-supply = <&lcd_pp3300>;
+		Biasvol-supply = <&vcc_lcdbias>;
 		volregP-supply = <&reg_lcd_vsp>;
 		volregN-supply = <&reg_lcd_vsn>;
-		//blen-supply = <&reg_lcd_blen>;
-		pp3300-supply = <&pm8916_l16>;
-		pp1800-supply = <&pm8916_l6>;
-		
+		backlight-supply = <&lcd_backlight>;
+
 		reset-gpios = <&msmgpio 25 GPIO_ACTIVE_HIGH>;
 
 		/* HW Boe
@@ -674,7 +690,7 @@
 		panel-gpios = <&msmgpio 32 GPIO_ACTIVE_HIGH>;
 		vled-gpios = <&msmgpio 97 GPIO_ACTIVE_HIGH>;*/
 
-		backlight = <&backlight>;
+		//backlight = <&backlight>;
 
 		ports {
 			#address-cells = <1>;
