@@ -237,7 +237,7 @@ static int boe_nt51021_10_1200p_prepare(struct drm_panel *panel)
 	if (ret < 0) {
 		dev_err(dev, "Failed to initialize panel: %d\n", ret);
 		gpiod_set_value_cansleep(ctx->reset_gpio, 1);
-		regulator_bulk_disable(ARRAY_SIZE(ctx->supplies), ctx->supplies);
+		boe_nt51021_10_1200p_pwr_en(ctx, 0);
 		return ret;
 	}
 
@@ -247,6 +247,9 @@ static int boe_nt51021_10_1200p_prepare(struct drm_panel *panel)
 
 static int boe_nt51021_10_1200p_enable(struct drm_panel *panel)
 {
+	struct boe_nt51021_10_1200p *ctx = to_boe_nt51021_10_1200p(panel);
+	struct device *dev = &ctx->dsi->dev;
+
 	if (ctx->enabled)
 		return 0;
 
@@ -278,6 +281,9 @@ static int boe_nt51021_10_1200p_unprepare(struct drm_panel *panel)
 
 static int boe_nt51021_10_1200p_disable(struct drm_panel *panel)
 {
+	struct boe_nt51021_10_1200p *ctx = to_boe_nt51021_10_1200p(panel);
+	struct device *dev = &ctx->dsi->dev;
+
 	if (!ctx->enabled)
 		return 0;
 
@@ -458,13 +464,6 @@ static int boe_nt51021_10_1200p_probe(struct mipi_dsi_device *dsi)
 	ctx->backlight = devm_regulator_get(dev, "backlight");
 	if (IS_ERR(ctx->backlight))
 		return PTR_ERR(ctx->backlight);
-	/*ctx->supplies[0].supply = "vcc";
-	ctx->supplies[1].supply = "vdd";
-	ctx->supplies[2].supply = "bl_en";
-	ret = devm_regulator_bulk_get(dev, ARRAY_SIZE(ctx->supplies),
-				      ctx->supplies);
-	if (ret < 0)
-		return dev_err_probe(dev, ret, "Failed to get regulators\n");*/
 
 	ctx->reset_gpio = devm_gpiod_get(dev, "reset", GPIOD_OUT_HIGH);
 	if (IS_ERR(ctx->reset_gpio))
