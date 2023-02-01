@@ -710,8 +710,8 @@
 
 		//vddio-supply = <&pm8916_l6>;
 		
-		lcdio-vcc-supply = <&pm8916_l6>;
-		lcdanalog-vcc-supply = <&lcd_pp3300>;
+		//lcdio-vcc-supply = <&pm8916_l6>;
+		//lcdanalog-vcc-supply = <&lcd_pp3300>;
 		//Biasvol-supply = <&vcc_lcdbias>;
 		vsp-supply = <&reg_lcd_vsp>;
 		vsn-supply = <&reg_lcd_vsn>;
