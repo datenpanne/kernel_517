@@ -221,7 +221,7 @@ static int boe_nt51021_10_1200p_prepare(struct drm_panel *panel)
 
         boe_nt51021_10_1200p_reset(ctx);
 
-	ret = boe_nt51021_10_1200p_on(ctx);
+	ret = boe_nt51021_10_1200p_init(ctx);
 	if (ret < 0) {
 		dev_err(dev, "Failed to initialize panel: %d\n", ret);
 		gpiod_set_value_cansleep(ctx->reset_gpio, 1);
@@ -237,9 +237,14 @@ static int boe_nt51021_10_1200p_enable(struct drm_panel *panel)
 {
 	struct boe_nt51021_10_1200p *ctx = to_boe_nt51021_10_1200p(panel);
 	struct device *dev = &ctx->dsi->dev;
+	int ret;
 
 	if (ctx->enabled)
 		return 0;
+
+	ret = boe_nt51021_10_1200p_on(ctx);
+	if (ret < 0)
+		return ret;
 
 	msleep(130);
 
