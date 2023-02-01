@@ -179,39 +179,101 @@
 			retain-state-suspended;
 		};
 	};
-
-	lcd_backlight: gpio-regulator {
-		compatible = "regulator-gpio";
-		regulator-name = "lcd_backlight";
-		enable-active-high;
-		regulator-boot-on;
-		//delay 5000
-		enable-gpios = <&msmgpio 109 GPIO_ACTIVE_HIGH>;
-		//gpio = <&msmgpio 109 GPIO_ACTIVE_HIGH>;
-		startup-delay-us = <5000000>;
-		//pinctrl-names = "default";
-		//pinctrl-0 = <&lcd_vsp_default>;
-	};
-
-	vcc_lcdbias: regulator-lcdbias {
+	
+	lcd_pp3v3: regulator-pp3v3 {
 		compatible = "regulator-fixed";
-		regulator-name = "vcc_lcdbias";
-		regulator-min-microvolt = <5400000>;
-		regulator-max-microvolt = <5400000>;
-		startup-delay-us = <400000>;
-		//delay 400
-		regulator-always-on;
-		regulator-boot-on;
-	};
-
-	lcd_pp3300: regulator-pp3300 {
-		compatible = "regulator-fixed";
-		regulator-name = "lcd_pp3300";
+		regulator-name = "lcd_pp3v3";
 		vin-supply = <&pm8916_l17>;
 		regulator-min-microvolt = <3300000>;
 		regulator-max-microvolt = <3300000>;
 		regulator-always-on;
 		regulator-boot-on;
+	};
+	
+	lcd_backlight: gpio-regulator {
+		compatible = "regulator-gpio";
+		regulator-name = "lcd_backlight";
+		enable-active-high;
+		regulator-boot-on;
+		gpios = <&msmgpio 109 GPIO_ACTIVE_HIGH>;
+		startup-delay-us = <5000000>;
+		//pinctrl-names = "default";
+		//pinctrl-0 = <&lcd_backlight_default>;
+	};
+
+	lcd_pp1v8: regulator-lcd-pp1v8 {
+		compatible = "regulator-fixed";
+		regulator-name = "lcd_pp1v8";
+		vin-supply = <&pm8916_l6>;
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <1800000>;
+		regulator-always-on;
+		regulator-boot-on;
+	};
+
+	lcd_iovcc: gpio-regulator-iovcc {
+		compatible = "regulator-gpio";
+		regulator-name = "lcd_iovcc";
+		enable-active-high;
+		regulator-boot-on;
+		gpios = <&msmgpio 32 GPIO_ACTIVE_HIGH>;
+		startup-delay-us = <200000>;
+		vin-supply = <&lcd_pp1v8>;
+		
+		pinctrl-names = "default";
+		pinctrl-0 = <&lcd_panel_default>;
+	};
+
+	reg_lcd_vsn: regulator-lcd-vsn {
+		compatible = "regulator-fixed";
+		regulator-name = "lcd_vsn";
+		regulator-min-microvolt = <5400000>;
+		regulator-max-microvolt = <5400000>;
+		regulator-always-on;
+		regulator-boot-on; // allows fb console to show up briefly at boot without always-on
+		/*gpio = <&msmgpio 32 GPIO_ACTIVE_HIGH>;
+		startup-delay-us = <200000>; //delay 200
+		enable-active-high;
+		pinctrl-names = "default";
+		pinctrl-0 = <&lcd_vsn_default>;*/
+	};
+
+	reg_lcd_vsp: regulator-lcd-vsp {
+		compatible = "regulator-fixed";
+		regulator-name = "lcd_vsp";
+		regulator-min-microvolt = <5400000>;
+		regulator-max-microvolt = <5400000>;
+		regulator-always-on;
+		regulator-boot-on; // allows fb console to show up briefly at boot without always-on
+		/*gpio = <&msmgpio 97 GPIO_ACTIVE_HIGH>;
+		enable-active-high;
+		startup-delay-us = <200>; //delay 200
+		pinctrl-names = "default";
+		pinctrl-0 = <&lcd_vsp_default>;*/
+	};
+
+	lcd_vled_vsp: gpio-regulator-vsp {
+		compatible = "regulator-gpio";
+		regulator-name = "vsp";
+		enable-active-high;
+		regulator-boot-on;
+		gpios = <&msmgpio 97 GPIO_ACTIVE_HIGH>;
+		startup-delay-us = <200000>;
+		vin-supply = <&reg_lcd_vsp>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&lcd_vled_default>;
+	};
+
+	lcd_vled_vsn: gpio-regulator-vsn {
+		compatible = "regulator-gpio";
+		regulator-name = "vsn";
+		enable-active-high;
+		regulator-boot-on;
+		gpios = <&msmgpio 97 GPIO_ACTIVE_HIGH>;
+		startup-delay-us = <200000>;
+		vin-supply = <&reg_lcd_vsn>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&lcd_vled_default>;
 	};
 
 	/*reg_lcd_vcc: vcc {
@@ -255,34 +317,6 @@
 		pinctrl-names = "default";
 		pinctrl-0 = <&lcd_blen_default>;
 	};*/
-
-	reg_lcd_vsp: regulator-lcd-vsp {
-		compatible = "regulator-fixed";
-		regulator-name = "lcd_vsp";
-		regulator-min-microvolt = <5400000>;
-		regulator-max-microvolt = <5400000>;
-		regulator-always-on;
-		//regulator-boot-on; // allows fb console to show up briefly at boot without always-on
-		gpio = <&msmgpio 97 GPIO_ACTIVE_HIGH>;
-		enable-active-high;
-		startup-delay-us = <200000>; //delay 200
-		pinctrl-names = "default";
-		pinctrl-0 = <&lcd_vsp_default>;
-	};
-
-	reg_lcd_vsn: regulator-lcd-vsn {
-		compatible = "regulator-fixed";
-		regulator-name = "lcd_vsn";
-		regulator-min-microvolt = <5400000>;
-		regulator-max-microvolt = <5400000>;
-		regulator-always-on;
-		//regulator-boot-on; // allows fb console to show up briefly at boot without always-on
-		gpio = <&msmgpio 32 GPIO_ACTIVE_HIGH>;
-		startup-delay-us = <200000>; //delay 200
-		enable-active-high;
-		pinctrl-names = "default";
-		pinctrl-0 = <&lcd_vsn_default>;
-	};
 
 	/*reg_vcc5v0: vcc5v0 {
 		compatible = "regulator-fixed";
@@ -576,7 +610,7 @@
 		reset-gpios = <&msmgpio 12 0x0>;
 	};
 
-	backlight: backlight@2c {
+	/*backlight: backlight@2c {
 		status = "ok";
 		compatible = "ti,lp8556";
 		reg = <0x2c>;
@@ -638,7 +672,7 @@
 				rom-addr = /bits/ 8 <0x16>;
 				rom-val = /bits/ 8 <0x0f>;
 		};
-	};
+	};*/
 };	
 
 &blsp1_uart2 {
@@ -678,9 +712,11 @@
 		
 		lcdio-vcc-supply = <&pm8916_l6>;
 		lcdanalog-vcc-supply = <&lcd_pp3300>;
-		Biasvol-supply = <&vcc_lcdbias>;
-		volregP-supply = <&reg_lcd_vsp>;
-		volregN-supply = <&reg_lcd_vsn>;
+		//Biasvol-supply = <&vcc_lcdbias>;
+		vsp-supply = <&reg_lcd_vsp>;
+		vsn-supply = <&reg_lcd_vsn>;
+		lcdiovcc-supply = <&lcd_iovcc>;
+		//volregN-supply = <&reg_lcd_vsn>;
 		backlight-supply = <&lcd_backlight>;
 
 		reset-gpios = <&msmgpio 25 GPIO_ACTIVE_HIGH>;
@@ -1070,7 +1106,7 @@
 		};
 	};
 
-	lcd_vsp_default: lcd-vsp-default {
+	lcd_vled_default: lcd-vled-default {
 		pins = "gpio97";
 		function = "gpio";
 
@@ -1079,7 +1115,7 @@
 		output-high;
 	};
 
-	lcd_vsn_default: lcd-vsn-default {
+	lcd_panel_default: lcd-panel-default {
 		pins = "gpio32";
 		function = "gpio";
 
@@ -1088,11 +1124,17 @@
 		output-high;
 	};
 
-	lcd_backlight_en_pin_a: lcd-backlight-vddio {
+	lcd_backlight_default: lcd-backlight-default {
 		pins = "gpio109";
-		drive-strength = <10>;
-		output-low;
-		bias-disable;
+		function = "gpio";
+
+		drive-strength = <2>;
+		bias-pull-up;
+		output-high;
+		
+		//drive-strength = <10>;
+		//output-low;
+		//bias-disable;
 	};
 
 	/*bq {
