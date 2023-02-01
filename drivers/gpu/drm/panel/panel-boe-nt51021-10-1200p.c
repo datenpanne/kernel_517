@@ -19,14 +19,16 @@
 struct boe_nt51021_10_1200p {
 	struct drm_panel panel;
 	struct mipi_dsi_device *dsi;
-	struct regulator *vsp;  // as power supply
-	struct regulator *vsn;  // as power supply
+	struct regulator *lcd_vsp;  // as power supply
+	struct regulator *lcd_vsn;  // as power supply
         //struct regulator *lcdanalogvcc ; // (vdd) lcd_vci (3v3/2v85?)
-        struct regulator *lcdiovcc ; // 32 (vddio) lcdio_vcc 1v8
+        struct regulator *lcd_iovcc ; // 32 (vddio) lcdio_vcc 1v8
         //struct regulator *lcdbias;  // vled; 97
         struct regulator *backlight;  // bkl_gpio; // 109
 	struct gpio_desc *reset_gpio;
+
 	bool prepared;
+	bool enabled;
 };
 
 #define HW_NT51021_VND_MIPI 0x8f
@@ -102,16 +104,18 @@ static void boe_nt51021_10_1200p_reset(struct boe_nt51021_10_1200p *ctx)
 
 static void boe_nt51021_10_1200p_pwr_en(struct boe_nt51021_10_1200p *ctx, int enabled)
 {
-	ret = regulator_enable(ctx->vsp);
+	int ret;
+
+	ret = regulator_enable(ctx->lcd_vsp);
 	if (ret < 0)
 		return ret;
-	ret = regulator_enable(ctx->vsn);
+	ret = regulator_enable(ctx->lcd_vsn);
 	if (ret < 0)
 		return ret;
 	ret = regulator_enable(ctx->backlight);
 	if (ret < 0)
 		return ret;
-	ret = regulator_enable(ctx->lcdiovcc);
+	ret = regulator_enable(ctx->lcd_iovcc);
 	if (ret < 0)
 		return ret;
 	/*ret = regulator_enable(ctx->vsn);
@@ -241,6 +245,17 @@ static int boe_nt51021_10_1200p_prepare(struct drm_panel *panel)
 	return 0;
 }
 
+static int boe_nt51021_10_1200p_enable(struct drm_panel *panel)
+{
+	if (ctx->enabled)
+		return 0;
+
+	msleep(130);
+
+	ctx->enabled = true;
+	return 0;
+}
+
 static int boe_nt51021_10_1200p_unprepare(struct drm_panel *panel)
 {
 	struct boe_nt51021_10_1200p *ctx = to_boe_nt51021_10_1200p(panel);
@@ -258,6 +273,17 @@ static int boe_nt51021_10_1200p_unprepare(struct drm_panel *panel)
         boe_nt51021_10_1200p_pwr_en(ctx, 1);
 
 	ctx->prepared = false;
+	return 0;
+}
+
+static int boe_nt51021_10_1200p_disable(struct drm_panel *panel)
+{
+	if (!ctx->enabled)
+		return 0;
+
+	msleep(130);
+
+	ctx->enabled = false;
 	return 0;
 }
 
@@ -297,6 +323,8 @@ static int boe_nt51021_10_1200p_get_modes(struct drm_panel *panel,
 static const struct drm_panel_funcs boe_nt51021_10_1200p_panel_funcs = {
 	.prepare = boe_nt51021_10_1200p_prepare,
 	.unprepare = boe_nt51021_10_1200p_unprepare,
+	.enable = boe_nt51021_10_1200p_enable,
+	.disable = boe_nt51021_10_1200p_disable,
 	.get_modes = boe_nt51021_10_1200p_get_modes,
 };
 
@@ -414,7 +442,22 @@ static int boe_nt51021_10_1200p_probe(struct mipi_dsi_device *dsi)
 	ctx = devm_kzalloc(dev, sizeof(*ctx), GFP_KERNEL);
 	if (!ctx)
 		return -ENOMEM;
+		
+	ctx->lcd_vsp = devm_regulator_get(dev, "vsp");
+	if (IS_ERR(ctx->lcd_vsp))
+		return PTR_ERR(ctx->lcd_vsp);
 
+	ctx->lcd_vsn = devm_regulator_get(dev, "vsn");
+	if (IS_ERR(ctx->lcd_vsn))
+		return PTR_ERR(ctx->lcd_vsn);
+
+	ctx->lcd_iovcc = devm_regulator_get(dev, "lcdiovcc");
+	if (IS_ERR(ctx->lcd_iovcc))
+		return PTR_ERR(ctx->lcd_iovcc);
+
+	ctx->backlight = devm_regulator_get(dev, "backlight");
+	if (IS_ERR(ctx->backlight))
+		return PTR_ERR(ctx->backlight);
 	/*ctx->supplies[0].supply = "vcc";
 	ctx->supplies[1].supply = "vdd";
 	ctx->supplies[2].supply = "bl_en";
