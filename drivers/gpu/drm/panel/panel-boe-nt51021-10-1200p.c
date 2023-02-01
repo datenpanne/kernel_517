@@ -23,7 +23,7 @@ struct boe_nt51021_10_1200p {
 	struct regulator *lcd_vsn;  // as power supply
         //struct regulator *lcdanalogvcc ; // (vdd) lcd_vci (3v3/2v85?)
         struct regulator *lcd_iovcc ; // 32 (vddio) lcdio_vcc 1v8
-        //struct regulator *lcdbias;  // vled; 97
+        //struct regulator *lcd_bias;  // vled; 97
         struct regulator *backlight;  // bkl_gpio; // 109
 	struct gpio_desc *reset_gpio;
 
@@ -106,9 +106,9 @@ static void boe_nt51021_10_1200p_pwr_en(struct boe_nt51021_10_1200p *ctx, int en
 {
 	regulator_enable(ctx->lcd_vsp);
 	regulator_enable(ctx->lcd_vsn);
+
 	regulator_enable(ctx->backlight);
 	regulator_enable(ctx->lcd_iovcc);
-	//regulator_enable(ctx->vsn);
 }
 
 static int boe_nt51021_10_1200p_init(struct boe_nt51021_10_1200p *ctx)
@@ -116,6 +116,9 @@ static int boe_nt51021_10_1200p_init(struct boe_nt51021_10_1200p *ctx)
 	struct mipi_dsi_device *dsi = ctx->dsi;
 	struct device *dev = &dsi->dev;
 	int ret;
+
+	regulator_enable(ctx->backlight);
+	regulator_enable(ctx->lcd_iovcc);
 
 	dsi->mode_flags |= MIPI_DSI_MODE_LPM;
 

@@ -189,7 +189,19 @@
 		regulator-always-on;
 		regulator-boot-on;
 	};
-	
+
+	/*lcd_vled: gpio-regulator {
+		compatible = "regulator-gpio";
+		regulator-name = "lcd_vled";
+		enable-active-high;
+		regulator-boot-on;
+		gpios = <&msmgpio 97 GPIO_ACTIVE_HIGH>;
+		startup-delay-us = <200000>;
+		//vin-supply = <&lcd_pp3v3>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&lcd_vled_default>;
+	};*/
+
 	lcd_backlight: gpio-regulator {
 		compatible = "regulator-gpio";
 		regulator-name = "lcd_backlight";
@@ -197,8 +209,9 @@
 		regulator-boot-on;
 		gpios = <&msmgpio 109 GPIO_ACTIVE_HIGH>;
 		startup-delay-us = <5000000>;
-		//pinctrl-names = "default";
-		//pinctrl-0 = <&lcd_backlight_default>;
+		//vin-supply = <&lcd_pp3v3>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&lcd_backlight_default>;
 	};
 
 	lcd_pp1v8: regulator-lcd-pp1v8 {
@@ -713,8 +726,8 @@
 		//lcdio-vcc-supply = <&pm8916_l6>;
 		//lcdanalog-vcc-supply = <&lcd_pp3300>;
 		//Biasvol-supply = <&vcc_lcdbias>;
-		vsp-supply = <&reg_lcd_vsp>;
-		vsn-supply = <&reg_lcd_vsn>;
+		vsp-supply = <&lcd_vled_vsp>;
+		vsn-supply = <&lcd_vled_vsn>;
 		lcdiovcc-supply = <&lcd_iovcc>;
 		//volregN-supply = <&reg_lcd_vsn>;
 		backlight-supply = <&lcd_backlight>;
