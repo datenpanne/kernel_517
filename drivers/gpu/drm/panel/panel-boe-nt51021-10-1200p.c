@@ -104,23 +104,11 @@ static void boe_nt51021_10_1200p_reset(struct boe_nt51021_10_1200p *ctx)
 
 static void boe_nt51021_10_1200p_pwr_en(struct boe_nt51021_10_1200p *ctx, int enabled)
 {
-	int ret;
-
-	ret = regulator_enable(ctx->lcd_vsp);
-	if (ret < 0)
-		return ret;
-	ret = regulator_enable(ctx->lcd_vsn);
-	if (ret < 0)
-		return ret;
-	ret = regulator_enable(ctx->backlight);
-	if (ret < 0)
-		return ret;
-	ret = regulator_enable(ctx->lcd_iovcc);
-	if (ret < 0)
-		return ret;
-	/*ret = regulator_enable(ctx->vsn);
-	if (ret < 0)
-		return ret;*/
+	regulator_enable(ctx->lcd_vsp);
+	regulator_enable(ctx->lcd_vsn);
+	regulator_enable(ctx->backlight);
+	regulator_enable(ctx->lcd_iovcc);
+	//regulator_enable(ctx->vsn);
 }
 
 static int boe_nt51021_10_1200p_init(struct boe_nt51021_10_1200p *ctx)
