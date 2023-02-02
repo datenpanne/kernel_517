@@ -180,27 +180,27 @@
 		};
 	};
 	
-	lcd_pp3v3: regulator-pp3v3 {
+	lcd_pp5v4: regulator-pp5v4 {
 		compatible = "regulator-fixed";
-		regulator-name = "lcd_pp3v3";
-		vin-supply = <&pm8916_l17>;
-		regulator-min-microvolt = <3300000>;
-		regulator-max-microvolt = <3300000>;
+		regulator-name = "lcd_pp5v4";
+		//vin-supply = <&pm8916_l17>;
+		regulator-min-microvolt = <5400000>;
+		regulator-max-microvolt = <5400000>;
 		regulator-always-on;
 		regulator-boot-on;
 	};
 
-	/*lcd_vled: gpio-regulator {
+	vcc_lcdbias: gpio-regulator {
 		compatible = "regulator-gpio";
-		regulator-name = "lcd_vled";
+		regulator-name = "vcc_lcdbias";
 		enable-active-high;
 		regulator-boot-on;
 		gpios = <&msmgpio 97 GPIO_ACTIVE_HIGH>;
 		startup-delay-us = <200000>;
-		//vin-supply = <&lcd_pp3v3>;
+		vin-supply = <&lcd_pp5v4>;
 		pinctrl-names = "default";
 		pinctrl-0 = <&lcd_vled_default>;
-	};*/
+	};
 
 	lcd_backlight: gpio-regulator {
 		compatible = "regulator-gpio";
@@ -265,7 +265,7 @@
 		pinctrl-0 = <&lcd_vsp_default>;*/
 	};
 
-	lcd_vled_vsp: gpio-regulator-vsp {
+	/*lcd_vled_vsp: gpio-regulator-vsp {
 		compatible = "regulator-gpio";
 		regulator-name = "vsp";
 		enable-active-high;
@@ -287,7 +287,7 @@
 		vin-supply = <&reg_lcd_vsn>;
 		pinctrl-names = "default";
 		pinctrl-0 = <&lcd_vled_default>;
-	};
+	};*/
 
 	/*reg_lcd_vcc: vcc {
 		compatible = "regulator-fixed";
@@ -725,9 +725,9 @@
 		
 		//lcdio-vcc-supply = <&pm8916_l6>;
 		//lcdanalog-vcc-supply = <&lcd_pp3300>;
-		//Biasvol-supply = <&vcc_lcdbias>;
-		vsp-supply = <&lcd_vled_vsp>;
-		vsn-supply = <&lcd_vled_vsn>;
+		biasvol-supply = <&vcc_lcdbias>;
+		vsp-supply = <&reg_lcd_vsp>;
+		vsn-supply = <&reg_lcd_vsn>;
 		lcdiovcc-supply = <&lcd_iovcc>;
 		//volregN-supply = <&reg_lcd_vsn>;
 		backlight-supply = <&lcd_backlight>;

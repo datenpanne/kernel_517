@@ -23,7 +23,7 @@ struct boe_nt51021_10_1200p {
 	struct regulator *lcd_vsn;  // as power supply
         //struct regulator *lcdanalogvcc ; // (vdd) lcd_vci (3v3/2v85?)
         struct regulator *lcd_iovcc ; // 32 (vddio) lcdio_vcc 1v8
-        //struct regulator *lcd_bias;  // vled; 97
+        struct regulator *lcd_bias;  // vled; 97
         struct regulator *backlight;  // bkl_gpio; // 109
 	struct gpio_desc *reset_gpio;
 
@@ -99,14 +99,15 @@ static void boe_nt51021_10_1200p_reset(struct boe_nt51021_10_1200p *ctx)
 	gpiod_set_value_cansleep(ctx->reset_gpio, 1);
 	msleep(20);
 	gpiod_set_value_cansleep(ctx->reset_gpio, 0);
-	msleep(30);
+	msleep(50);
 }
 
 static void boe_nt51021_10_1200p_pwr_en(struct boe_nt51021_10_1200p *ctx, int enabled)
 {
 	regulator_enable(ctx->lcd_vsp);
+        msleep(5);
 	regulator_enable(ctx->lcd_vsn);
-
+        msleep(5);
 	regulator_enable(ctx->backlight);
 	regulator_enable(ctx->lcd_iovcc);
 }
@@ -135,7 +136,7 @@ static int boe_nt51021_10_1200p_init(struct boe_nt51021_10_1200p *ctx)
 	}
 	msleep(20);
 	dsi_dcs_write_seq(dsi, HW_NT51021_VND_MIPI, 0xa5); // MIPI enable command interface
-    msleep(5);
+	msleep(5);
 	dsi_dcs_write_seq(dsi, HW_NT51021_VND_INDEX0, 0x00); // command page 0
 	dsi_dcs_write_seq(dsi, HW_NT51021_VND_INDEX1, 0x00); // command page 0
 	dsi_dcs_write_seq(dsi, HW_NT51021_VND_GOP, 0x80); // GIP unlock OTP
@@ -149,10 +150,10 @@ static int boe_nt51021_10_1200p_init(struct boe_nt51021_10_1200p *ctx)
 
 	dsi_dcs_write_seq(dsi, HW_NT51021_VND_INDEX0, 0xaa); // command page 1
 	dsi_dcs_write_seq(dsi, HW_NT51021_VND_INDEX1, 0x11); // command page 1
-    dsi_dcs_write_seq(dsi, HW_NT51021_VND_A9, 0x4b); // IC MIPI Rx drive current capability gear 85%
-    dsi_dcs_write_seq(dsi, HW_NT51021_VND_TESTMODE1, 0x04); // test mode 1
-    dsi_dcs_write_seq(dsi, HW_NT51021_VND_TESTMODE2, 0x08); // test mode 2
-    dsi_dcs_write_seq(dsi, HW_NT51021_VND_TESTMODE3, 0x10); // test mode 3
+        dsi_dcs_write_seq(dsi, HW_NT51021_VND_A9, 0x4b); // IC MIPI Rx drive current capability gear 85%
+        dsi_dcs_write_seq(dsi, HW_NT51021_VND_TESTMODE1, 0x04); // test mode 1
+        dsi_dcs_write_seq(dsi, HW_NT51021_VND_TESTMODE2, 0x08); // test mode 2
+        dsi_dcs_write_seq(dsi, HW_NT51021_VND_TESTMODE3, 0x10); // test mode 3
 
 	dsi_dcs_write_seq(dsi, HW_NT51021_VND_INDEX0, 0xbb); // command page 2
 	dsi_dcs_write_seq(dsi, HW_NT51021_VND_INDEX1, 0x22); // command page 2
@@ -220,17 +221,7 @@ static int boe_nt51021_10_1200p_prepare(struct drm_panel *panel)
 	if (ctx->prepared)
 		return 0;
 
-        boe_nt51021_10_1200p_pwr_en(ctx, 1);
 
-        boe_nt51021_10_1200p_reset(ctx);
-
-	ret = boe_nt51021_10_1200p_init(ctx);
-	if (ret < 0) {
-		dev_err(dev, "Failed to initialize panel: %d\n", ret);
-		gpiod_set_value_cansleep(ctx->reset_gpio, 1);
-		boe_nt51021_10_1200p_pwr_en(ctx, 0);
-		return ret;
-	}
 
 	ctx->prepared = true;
 	return 0;
@@ -244,12 +235,23 @@ static int boe_nt51021_10_1200p_enable(struct drm_panel *panel)
 
 	if (ctx->enabled)
 		return 0;
+		
+        boe_nt51021_10_1200p_pwr_en(ctx, 1);
 
+        boe_nt51021_10_1200p_reset(ctx);
+
+	ret = boe_nt51021_10_1200p_init(ctx);
+	if (ret < 0) {
+		dev_err(dev, "Failed to initialize panel: %d\n", ret);
+		gpiod_set_value_cansleep(ctx->reset_gpio, 1);
+		boe_nt51021_10_1200p_pwr_en(ctx, 0);
+		return ret;
+	}
 	ret = boe_nt51021_10_1200p_on(ctx);
 	if (ret < 0)
 		return ret;
 
-	msleep(130);
+	//msleep(130);
 
 	ctx->enabled = true;
 	return 0;
@@ -264,12 +266,6 @@ static int boe_nt51021_10_1200p_unprepare(struct drm_panel *panel)
 	if (!ctx->prepared)
 		return 0;
 
-	ret = boe_nt51021_10_1200p_off(ctx);
-	if (ret < 0)
-		dev_err(dev, "Failed to un-initialize panel: %d\n", ret);
-
-	gpiod_set_value_cansleep(ctx->reset_gpio, 1);
-        boe_nt51021_10_1200p_pwr_en(ctx, 1);
 
 	ctx->prepared = false;
 	return 0;
@@ -282,8 +278,14 @@ static int boe_nt51021_10_1200p_disable(struct drm_panel *panel)
 
 	if (!ctx->enabled)
 		return 0;
+		
+	ret = boe_nt51021_10_1200p_off(ctx);
+	if (ret < 0)
+		dev_err(dev, "Failed to un-initialize panel: %d\n", ret);
 
-	msleep(130);
+	gpiod_set_value_cansleep(ctx->reset_gpio, 1);
+        boe_nt51021_10_1200p_pwr_en(ctx, 1);
+	//msleep(130);
 
 	ctx->enabled = false;
 	return 0;
@@ -393,7 +395,8 @@ static int boe_nt51021_10_1200p_bl_update_status(struct backlight_device *bl)
     //gpiod_set_value_cansleep(ctx->blen_gpio, !!brightness);
     //mutex_lock(&ctx->mutex);
     //hw_nt51021_bias_en(ctx, 1);
-
+        regulator_enable(ctx->lcd_bias);
+        
 	dsi->mode_flags &= ~MIPI_DSI_MODE_LPM; // HS_Mode
 
 	/*ret = hw_nt51021_bkl_cmd(ctx);
@@ -460,7 +463,11 @@ static int boe_nt51021_10_1200p_probe(struct mipi_dsi_device *dsi)
 	ctx->backlight = devm_regulator_get(dev, "backlight");
 	if (IS_ERR(ctx->backlight))
 		return PTR_ERR(ctx->backlight);
-
+		
+	ctx->lcd_bias = devm_regulator_get(dev, "biasvol");
+	if (IS_ERR(ctx->lcd_bias))
+		return PTR_ERR(ctx->lcd_bias);
+		
 	ctx->reset_gpio = devm_gpiod_get(dev, "reset", GPIOD_OUT_HIGH);
 	if (IS_ERR(ctx->reset_gpio))
 		return dev_err_probe(dev, PTR_ERR(ctx->reset_gpio),
