@@ -287,6 +287,7 @@ static int boe_nt51021_10_1200p_disable(struct drm_panel *panel)
 {
 	struct boe_nt51021_10_1200p *ctx = to_boe_nt51021_10_1200p(panel);
 	struct device *dev = &ctx->dsi->dev;
+	int ret;
 
 	if (!ctx->enabled)
 		return 0;
