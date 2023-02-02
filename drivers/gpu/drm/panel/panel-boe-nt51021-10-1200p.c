@@ -123,12 +123,7 @@ static int boe_nt51021_10_1200p_init(struct boe_nt51021_10_1200p *ctx)
 
 	dsi->mode_flags |= MIPI_DSI_MODE_LPM;
 
-	dsi_dcs_write_seq(dsi, HW_NT51021_VND_MIPI, 0xa5); // MIPI enable command	regulator_enable(ctx->lcd_vsp);
-        msleep(5);
-	regulator_enable(ctx->lcd_vsn);
-        msleep(5);
-	regulator_enable(ctx->backlight);
-	regulator_enable(ctx->lcd_iovcc); interface
+	dsi_dcs_write_seq(dsi, HW_NT51021_VND_MIPI, 0xa5); // MIPI enable command interface
 
 	/*ret = mipi_dsi_dcs_write(dsi, HW_NT51021_VND_MIPI, (u8[]){ 0xa5 }, 1);
 	if (ret < 0)
@@ -256,7 +251,7 @@ static int boe_nt51021_10_1200p_enable(struct drm_panel *panel)
 	if (ret < 0) {
 		dev_err(dev, "Failed to initialize panel: %d\n", ret);
 		gpiod_set_value_cansleep(ctx->reset_gpio, 1);
-		boe_nt51021_10_1200p_pwr_en(ctx, 0);
+		//boe_nt51021_10_1200p_pwr_en(ctx, 0);
 		return ret;
 	}
 	ret = boe_nt51021_10_1200p_on(ctx);
@@ -304,7 +299,7 @@ static int boe_nt51021_10_1200p_disable(struct drm_panel *panel)
 	regulator_disable(ctx->lcd_iovcc);
 
 	gpiod_set_value_cansleep(ctx->reset_gpio, 1);
-        boe_nt51021_10_1200p_pwr_en(ctx, 0);
+        //boe_nt51021_10_1200p_pwr_en(ctx, 0);
 	//msleep(130);
 
 	ctx->enabled = false;
